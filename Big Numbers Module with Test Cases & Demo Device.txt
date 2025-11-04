@@ -1,0 +1,1506 @@
+BIGNUM MODULE
+# ===============================================================================
+# BigNum Module - Scientific Notation Big Number Implementation
+# ===============================================================================
+#
+# Author: VukeFN
+# 
+# Based on the original work by CeleryMan from Epic Games Community Forums:
+# https://dev.epicgames.com/community/snippets/wpbL/fortnite-functions-to-work-with-ridiculously-big-numbers
+# 
+# Extended and enhanced with additional features including:
+# - Enhanced error handling and edge case management
+# - Comprehensive comparison operators with abbreviated forms
+# - Improved string formatting with negative number support
+# - Robust normalization functions for display formatting
+# - Comprehensive documentation and code organization
+# 
+# This module provides a big number system using scientific notation representation.
+# Numbers are stored as Value × 10^Exponent where Value is typically 1.0-9.999...
+# 
+# Features:
+# - Arithmetic operations (+, -, *, /)
+# - Comparison operations (=, ≠, <, >, ≤, ≥)
+# - String formatting with K/M/B/T suffixes
+# - Game utility functions for cost calculations
+# - Support for very large numbers (up to ~10^308)
+# 
+# Examples:
+# - 1,500 = big_number{Value := 1.5, Exponent := 3}
+# - 2.5M = big_number{Value := 2.5, Exponent := 6}
+# - 999.9B = big_number{Value := 9.999, Exponent := 11}
+# ===============================================================================
+
+using { /Verse.org/Simulation }
+
+BigNum<public> := module:
+
+    # ===========================================================================
+    # Core Data Structure
+    # ===========================================================================
+    
+    # Represents a big number using scientific notation: Value × 10^Exponent
+    # Value: The significant digits (typically normalized to 1.0-9.999...)
+    # Exponent: The power of 10 multiplier
+    big_number<public> := struct<concrete><persistable>:
+        @editable
+        Value:float = 0.0
+        @editable  
+        Exponent:int = 0
+
+    # ===========================================================================
+    # Arithmetic Operators
+    # ===========================================================================
+    
+    # Adds two big_numbers together
+    # Aligns exponents to common base before performing addition
+    # Result is automatically normalized
+    operator'+'<public>(NumberA:big_number, NumberB:big_number)<transacts>:big_number=
+        CommonExponent:int = Max(NumberA.Exponent, NumberB.Exponent)
+
+        NewValue:float = (NumberA.Value * Pow(10.0, (NumberA.Exponent - CommonExponent) * 1.0)) + 
+                            (NumberB.Value * Pow(10.0, (NumberB.Exponent - CommonExponent) * 1.0))
+
+        Normalize(big_number{Value := NewValue, Exponent := CommonExponent})
+
+    # Subtracts NumberB from NumberA
+    # Aligns exponents to common base before performing subtraction
+    # Result is automatically normalized
+    operator'-'<public>(NumberA:big_number, NumberB:big_number)<transacts>:big_number=
+        CommonExponent:int = Max(NumberA.Exponent, NumberB.Exponent)
+
+        NewValue:float = (NumberA.Value * Pow(10.0, (NumberA.Exponent - CommonExponent) * 1.0)) - 
+                            (NumberB.Value * Pow(10.0, (NumberB.Exponent - CommonExponent) * 1.0))
+
+        Normalize(big_number{Value := NewValue, Exponent := CommonExponent})
+
+    # Multiplies two big_numbers together
+    # Values are multiplied and exponents are added
+    # Result is automatically normalized
+    operator'*'<public>(NumberA:big_number, NumberB:big_number)<transacts>:big_number=
+        NewValue := NumberA.Value * NumberB.Value
+        NewExponent := NumberA.Exponent + NumberB.Exponent
+
+        Normalize(big_number{Value := NewValue, Exponent := NewExponent})
+
+    # Multiplies a big_number by a regular float
+    # Only the value is scaled, exponent remains the same
+    # Result is automatically normalized
+    operator'*'<public>(NumberA:big_number, NumberB:float)<transacts>:big_number=
+        NewValue := NumberA.Value * NumberB
+        NewExponent := NumberA.Exponent
+
+        Normalize(big_number{Value := NewValue, Exponent := NewExponent})
+
+    # Divides NumberA by NumberB
+    # Values are divided and exponents are subtracted
+    # Returns very large number (10^308) for division by zero
+    operator'/'<public>(NumberA:big_number, NumberB:big_number)<transacts>:big_number=
+        if (NumberB.Value = 0.0 or (Abs(NumberB.Value) < 1e-15 and NumberB.Exponent <= 0)):
+            return big_number{Value := 1.0, Exponent := 308} 
+        
+        NewValue := NumberA.Value / NumberB.Value
+        NewExponent := NumberA.Exponent - NumberB.Exponent
+        
+        Normalize(big_number{Value := NewValue, Exponent := NewExponent})
+
+    # Divides a big_number by a regular float
+    # Only the value is scaled, exponent remains the same
+    # Returns very large number (10^308) for division by zero
+    operator'/'<public>(NumberA:big_number, NumberB:float)<transacts>:big_number=
+        if (NumberB = 0.0 or Abs(NumberB) < 1e-15):
+            return big_number{Value := 1.0, Exponent := 308}
+        
+        NewValue := NumberA.Value / NumberB
+        NewExponent := NumberA.Exponent
+        
+        Normalize(big_number{Value := NewValue, Exponent := NewExponent})
+
+    # ===========================================================================
+    # Comparison Functions
+    # ===========================================================================
+    
+    # Returns true if NumberA equals NumberB exactly
+    # Both value and exponent must match
+    (NumberA:big_number).Equals<public>(NumberB:big_number)<transacts><decides>:void=
+        NumberA.Exponent = NumberB.Exponent and NumberA.Value = NumberB.Value
+
+    # Returns true if NumberA does not equal NumberB
+    # Inverse of Equals function
+    (NumberA:big_number).NotEquals<public>(NumberB:big_number)<transacts><decides>:void=
+        not (NumberA.Exponent = NumberB.Exponent and NumberA.Value = NumberB.Value)
+
+    # Returns true if NumberA is greater than NumberB
+    # First compares exponents, then values if exponents are equal
+    (NumberA:big_number).GreaterThan<public>(NumberB:big_number)<transacts><decides>:void=
+        not NumberA.LessThan[NumberB] and not NumberA.Equals[NumberB]
+
+    # Returns true if NumberA is greater than or equal to NumberB
+    # First compares exponents, then values if exponents are equal
+    (NumberA:big_number).GreaterThanOrEquals<public>(NumberB:big_number)<transacts><decides>:void=
+        NumberA.Exponent > NumberB.Exponent or (NumberA.Exponent = NumberB.Exponent and NumberA.Value >= NumberB.Value)
+
+    # Returns true if NumberA is less than NumberB
+    # First compares exponents, then values if exponents are equal
+    (NumberA:big_number).LessThan<public>(NumberB:big_number)<transacts><decides>:void=
+        NumberA.Exponent < NumberB.Exponent or (NumberA.Exponent = NumberB.Exponent and NumberA.Value < NumberB.Value)
+
+    # Returns true if NumberA is less than or equal to NumberB
+    # First compares exponents, then values if exponents are equal
+    (NumberA:big_number).LessThanOrEquals<public>(NumberB:big_number)<transacts><decides>:void=
+        NumberA.Exponent < NumberB.Exponent or (NumberA.Exponent = NumberB.Exponent and NumberA.Value <= NumberB.Value)
+
+    # ===========================================================================
+    # Abbreviated Comparison Functions
+    # ===========================================================================
+    
+    # Short aliases for comparison functions for convenience
+    (NumberA:big_number).EQ<public>(NumberB:big_number)<transacts><decides>:void= NumberA.Equals[NumberB]
+    (NumberA:big_number).NEQ<public>(NumberB:big_number)<transacts><decides>:void= NumberA.NotEquals[NumberB]
+    (NumberA:big_number).GT<public>(NumberB:big_number)<transacts><decides>:void= NumberA.GreaterThan[NumberB]
+    (NumberA:big_number).GTE<public>(NumberB:big_number)<transacts><decides>:void= NumberA.GreaterThanOrEquals[NumberB]
+    (NumberA:big_number).LT<public>(NumberB:big_number)<transacts><decides>:void= NumberA.LessThan[NumberB]
+    (NumberA:big_number).LTE<public>(NumberB:big_number)<transacts><decides>:void= NumberA.LessThanOrEquals[NumberB]
+
+    # ===========================================================================
+    # Game Utility Functions
+    # ===========================================================================
+
+    # Calculates the total cost for purchasing a range of items with scaling prices
+    # 
+    # Parameters:
+    # - BaseCost: The base cost for the first item
+    # - Start: Current number of items owned (starting point for price calculation)
+    # - Count: Number of items to purchase
+    # - CommonRatio: Price scaling factor (1.0 = no scaling, >1.0 = increasing prices)
+    # 
+    # Returns: Total cost to purchase Count items starting from Start position
+    # 
+    # Example: If you own 5 items and want to buy 3 more with 1.5x scaling:
+    # CalculateCostRange(BaseCost, 5, 3, 1.5) = cost for items 6, 7, and 8
+    CalculateCostRange<public>(BaseCost:big_number, Start:int, Count:int, CommonRatio:float)<transacts>:big_number=
+        # Handle no scaling case (CommonRatio = 1.0)
+        var TotalCost_Value:float = 0.0
+        var TotalCost_Exponent:int = 0
+        if (CommonRatio = 1.0):
+            set TotalCost_Value = BaseCost.Value * Count * 1.0
+            set TotalCost_Exponent = BaseCost.Exponent
+            return Normalize(big_number{Value := TotalCost_Value, Exponent := TotalCost_Exponent})
+
+        # Geometric series calculation for scaling prices
+        # Sum = BaseCost * (ratio^(Start+Count) - ratio^Start) / (ratio - 1)
+        term1 := Pow(CommonRatio, (Start + Count) * 1.0)
+        term2 := Pow(CommonRatio, Start * 1.0)
+
+        set TotalCost_Value = BaseCost.Value * (term1 - term2) / (CommonRatio - 1.0)
+        set TotalCost_Exponent = BaseCost.Exponent
+
+        Normalize(big_number{Value := TotalCost_Value, Exponent := TotalCost_Exponent})
+
+    # Calculates how many items can be afforded with available money
+    # 
+    # Parameters:
+    # - CurrentMoney: Available funds
+    # - BaseCost: Base cost per item
+    # - AmountOwned: Current number of items owned (affects scaling calculation)
+    # - CommonRatio: Price scaling factor (1.0 = no scaling, >1.0 = increasing prices)
+    # 
+    # Returns: Maximum number of items that can be purchased
+    # 
+    # Example: With 1000 coins, base cost 100, owning 0 items, no scaling:
+    # CalculateAffordableItems(1000, 100, 0, 1.0) = 10 items
+    CalculateAffordableItems<public>(CurrentMoney:big_number, BaseCost:big_number, AmountOwned:int, CommonRatio:float)<transacts>:int=
+        var AffordableItems:int = 1
+        loop:
+            if:
+                not CurrentMoney.GreaterThanOrEquals[CalculateCostRange(BaseCost, AmountOwned, AffordableItems, CommonRatio)]
+            then:
+                break
+            
+            set AffordableItems += 1
+
+        return AffordableItems - 1
+
+    # ===========================================================================
+    # String Formatting
+    # ===========================================================================
+
+    # Converts a big_number to a human-readable string with appropriate suffixes
+    # 
+    # Format examples:
+    # - 0 → "0"
+    # - 123 → "123"
+    # - 1,500 → "1.50K"
+    # - 2,300,000 → "2.30M"
+    # - -1,500 → "-1.50K"
+    # - Very large numbers → "1.50e500"
+    ToString<public>(ValueIN:big_number):string=
+        if (ValueIN.Value = 0.0):
+            return "0"
+
+        CorrectedNumber := NormalizeToNearestNumberSet(ValueIN)
+        var IsNegative:logic = if(CorrectedNumber.Value < 0.0) then true else false
+        
+        # Handle small numbers (less than 1000) without suffixes
+        if:
+            CorrectedNumber.Exponent < 3
+            ValueAsInt := Floor[Abs(CorrectedNumber.Value)]
+        then:
+            return if (IsNegative?) then "-{ValueAsInt}" else "{ValueAsInt}"
+        
+        # Format larger numbers with suffixes
+        var ValueAsString:string = "{Abs(CorrectedNumber.Value)}"
+
+        # Determine precision based on magnitude
+        var TargetLength:int = 4  # Default: "1.50" (4 characters)
+        if (Abs(CorrectedNumber.Value) >= 100.0):
+            set TargetLength = 3  # For "150" (3 characters)
+
+        # Truncate to appropriate length
+        if (ValueAsString.Length > TargetLength):
+            if:
+                Removed := ValueAsString.Remove[TargetLength, ValueAsString.Length]
+            then:
+                set ValueAsString = Removed
+        
+        # Add appropriate suffix or scientific notation
+        if:
+            SuffixIndex:int = Quotient[CorrectedNumber.Exponent, 3]
+            SuffixIndex < NumberSuffixes.Length
+            Suffix := NumberSuffixes[SuffixIndex]
+        then:
+            set ValueAsString += Suffix
+        else:
+            # Fall back to scientific notation for very large numbers
+            set ValueAsString += "e{CorrectedNumber.Exponent}"
+
+        if (IsNegative?) then "-{ValueAsString}" else ValueAsString
+
+    # Suffix array for number formatting
+    # Each index represents groups of 3 exponent digits (thousands, millions, etc.)
+    # Source: https://simple.wikipedia.org/wiki/Names_of_large_numbers
+    NumberSuffixes:[]string = array:
+        "",      # 10^0   - one
+        "K",     # 10^3   - thousand
+        "M",     # 10^6   - million  
+        "B",     # 10^9   - billion
+        "T",     # 10^12  - trillion
+        "Qa",    # 10^15  - quadrillion
+        "Qi",    # 10^18  - quintillion
+        "Sx",    # 10^21  - sextillion
+        "Sp",    # 10^24  - septillion
+        "Oc",    # 10^27  - octillion
+        "No",    # 10^30  - nonillion
+        "De",    # 10^33  - decillion
+        "Un",    # 10^36  - undecillion
+        "Du",    # 10^39  - duodecillion
+        "Tr",    # 10^42  - tredecillion
+        "Qat",   # 10^45  - quattuordecillion
+        "Qin",   # 10^48  - quindecillion
+        "Sxt",   # 10^51  - sexdecillion
+        "Spt",   # 10^54  - septendecillion
+        "Oct",   # 10^57  - octodecillion
+        "Non",   # 10^60  - novemdecillion
+        "Vig",   # 10^63  - vigintillion
+        "Und",   # 10^66  - unvigintillion
+        "Duv",   # 10^69  - duovigintillion
+        "Trv",   # 10^72  - trevigintillion
+        "Qav",   # 10^75  - quattuorvigintillion
+        "Qiv",   # 10^78  - quinvigintillion
+        "Sxv",   # 10^81  - sexvigintillion
+        "Spv",   # 10^84  - septenvigintillion
+        "Ocv",   # 10^87  - octovigintillion
+        "Nov",   # 10^90  - novemvigintillion
+        "Tri",   # 10^93  - trigintillion
+        "Utr",   # 10^96  - untrigintillion
+        "Dtr",   # 10^99  - duotrigintillion
+        "Ttr",   # 10^102 - tretrigintillion
+        "Qtr",   # 10^105 - quattuortrigintillion
+        "Qntr",  # 10^108 - quintrigintillion
+        "Sxtr",  # 10^111 - sextrigintillion
+        "Str",   # 10^114 - septentrigintillion
+        "Otr",   # 10^117 - octotrigintillion
+        "Ntr",   # 10^120 - novemtrigintillion
+        "Qua",   # 10^123 - quadragintillion
+        "Uqu",   # 10^126 - unquadragintillion
+        "Dqu",   # 10^129 - duoquadragintillion
+        "Tqu",   # 10^132 - trequadragintillion
+        "Qqu",   # 10^135 - quattuorquadragintillion
+        "Qnqu",  # 10^138 - quinquadragintillion
+        "Squ",   # 10^141 - sexquadragintillion
+        "Spqu",  # 10^144 - septenquadragintillion
+        "Oqu",   # 10^147 - octoquadragintillion
+        "Nqu",   # 10^150 - novemquadragintillion
+        "Qui",   # 10^153 - quinquagintillion
+        "Uqi",   # 10^156 - unquinquagintillion
+        "Dqi",   # 10^159 - duoquinquagintillion
+        "Tqi",   # 10^162 - trequinquagintillion
+        "Qqi",   # 10^165 - quattuorquinquagintillion
+        "Qqui",  # 10^168 - quinquinquagintillion
+        "Sqi",   # 10^171 - sexquinquagintillion
+        "Spqi",  # 10^174 - septenquinquagintillion
+        "Oqi",   # 10^177 - octoquinquagintillion
+        "Nqi",   # 10^180 - novemquinquagintillion
+        "Sx",   # 10^183 - sexagintillion - Abbreviated to "Sx" due to Fortnite limitations
+        "Usx",   # 10^186 - unsexagintillion
+        "Dsx",   # 10^189 - duosexagintillion
+        "Tsx",   # 10^192 - tresexagintillion
+        "Qsx",   # 10^195 - quattuorsexagintillion
+        "Qnsx",  # 10^198 - quinsexagintillion
+        "Ssx",   # 10^201 - sexsexagintillion
+        "Spsx",  # 10^204 - septensexagintillion
+        "Osx",   # 10^207 - octosexagintillion
+        "Nsx",   # 10^210 - novemsexagintillion
+        "Sep",   # 10^213 - septuagintillion
+        "Usp",   # 10^216 - unseptuagintillion
+        "Dsp",   # 10^219 - duoseptuagintillion
+        "Tsp",   # 10^222 - treseptuagintillion
+        "Qsp",   # 10^225 - quattuorseptuagintillion
+        "Qnsp",  # 10^228 - quinseptuagintillion
+        "Ssp",   # 10^231 - sexseptuagintillion
+        "Spsp",  # 10^234 - septenseptuagintillion
+        "Osp",   # 10^237 - octoseptuagintillion
+        "Nsp",   # 10^240 - novemseptuagintillion
+        "Ocg",   # 10^243 - octogintillion
+        "Uoc",   # 10^246 - unoctogintillion
+        "Doc",   # 10^249 - duooctogintillion
+        "Toc",   # 10^252 - treoctogintillion
+        "Qoc",   # 10^255 - quattuoroctogintillion
+        "Qnoc",  # 10^258 - quinoctogintillion
+        "Soc",   # 10^261 - sexoctogintillion
+        "Spoc",  # 10^264 - septenoctogintillion
+        "Ooc",   # 10^267 - octooctogintillion
+        "Noc",   # 10^270 - novemoctogintillion
+        "Nog",   # 10^273 - nonagintillion
+        "Ung",   # 10^276 - unnonagintillion
+        "Dng",   # 10^279 - duononagintillion
+        "Tng",   # 10^282 - trenonagintillion
+        "Qng",   # 10^285 - quattuornonagintillion
+        "Qnng",  # 10^288 - quinnonagintillion
+        "Sng",   # 10^291 - sexnonagintillion
+        "Spng",  # 10^294 - septennonagintillion
+        "Ong",   # 10^297 - octononagintillion
+        "Nng",   # 10^300 - novemnonagintillion
+        "Cen"    # 10^303 - centillion
+
+    # ===========================================================================
+    # Normalization Functions
+    # ===========================================================================
+
+    # Normalizes a big_number to scientific notation (1.0 ≤ |Value| < 10.0)
+    # 
+    # Examples:
+    # - 15.0 × 10^2 → 1.5 × 10^3
+    # - 0.15 × 10^4 → 1.5 × 10^3
+    # - -15.0 × 10^2 → -1.5 × 10^3
+    # 
+    # Handles negative numbers and zero appropriately
+    Normalize<public>(Number:big_number)<transacts>:big_number=
+        var NewExponent:int = Number.Exponent
+        var NewValue:float = Number.Value
+
+        # Handle zero case
+        if (NewValue = 0.0):
+            return big_number{}
+
+        # Handle negative numbers by working with absolute value
+        var IsNegative:logic = if(NewValue < 0.0) then true else false
+        if (IsNegative?):
+            set NewValue = -NewValue
+
+        # Shift decimal point to achieve 1.0 ≤ Value < 10.0
+        loop:
+            if (NewValue < 10.0):
+                break
+            set NewValue *= 0.1
+            set NewExponent += 1
+        
+        loop:
+            if (NewValue >= 1.0):
+                break
+            set NewValue *= 10.0
+            set NewExponent -= 1      
+
+        # Restore sign if needed
+        if (IsNegative?):
+            set NewValue = -NewValue
+
+        big_number{Value := NewValue, Exponent := NewExponent}
+
+    # Normalizes a big_number for display formatting (exponent divisible by 3)
+    # Used internally for string formatting to align with K/M/B suffix boundaries
+    # 
+    # Examples:
+    # - 1.5 × 10^4 → 15.0 × 10^3 (for "15.0K" display)
+    # - 1.5 × 10^5 → 150.0 × 10^3 (for "150K" display)
+    # 
+    # This ensures proper alignment with thousand/million/billion boundaries
+    NormalizeToNearestNumberSet<public>(Number:big_number)<transacts>:big_number=
+        var NewExponent:int = Number.Exponent
+        var NewValue:float = Number.Value
+
+        # Handle negative numbers by working with absolute value
+        var IsNegative:logic = if(NewValue < 0.0) then true else false
+        if (IsNegative?):
+            set NewValue = -NewValue
+
+        # Adjust to make exponent divisible by 3 (align with suffix boundaries)
+        loop:
+            if (Mod[NewExponent, 3] = 0):
+                break
+
+            set NewValue *= 10.0
+            set NewExponent -= 1
+
+        # Restore sign if needed
+        if (IsNegative?):
+            set NewValue = -NewValue
+
+        big_number{Value := NewValue, Exponent := NewExponent}
+		
+BIGNUM TEST SUITE
+# ===============================================================================
+# BigNum Test Suite - Comprehensive Unit Tests for BigNum Module
+# ===============================================================================
+#
+# Author: VukeFN
+# 
+# Testing Framework Credits:
+# Based on the Testing Framework by @RayBenefield
+# Source: https://github.com/RayBenefield/dev-xp/tree/master/src/node_modules/%40tableau/testing
+# 
+# Setup Instructions for UEFN:
+# 1. Copy this code into a .verse file in your project
+# 2. Build Verse code and place both `test_factory_device` and `big_number_test` devices in your island
+# 3. Add the `test_tag` Verse Tag Component to the `big_number_test` device
+# 4. Start the game and check the Output Log (bottom left of your UEFN Editor) for test results
+# 
+# Test Categories:
+# - Basic Structure Tests (2 tests)
+# - Addition Operations (5 tests)
+# - Subtraction Operations (4 tests)
+# - Multiplication Operations (5 tests)
+# - Division Operations (4 tests)
+# - Comparison Functions (7 tests)
+# - Normalization Functions (5 tests)
+# - Set Normalization (2 tests)
+# - String Formatting (7 tests)
+# - Game Utility Functions (3 tests)
+# 
+# Total: 44 comprehensive tests covering all BigNum functionality
+# ===============================================================================
+
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation/Tags }
+using { BigNum }
+
+# ===========================================================================
+# BigNum Test Suite Class
+# ===========================================================================
+
+big_number_test := class(creative_device, test_suite):
+    GetName<override>():string = "BigNum"
+    GetTests<override>():[]test_case = array:
+        # Basic Structure Tests
+        test_case:
+            Name := "Should create zero big_number by default"
+            Test := CreateDefaultZero
+        test_case:
+            Name := "Should create big_number with custom values"
+            Test := CreateCustomValues
+        
+        # Addition Tests
+        test_case:
+            Name := "Should add two zero big_numbers"
+            Test := AddTwoZeros
+        test_case:
+            Name := "Should add big_numbers with same exponent"
+            Test := AddSameExponent
+        test_case:
+            Name := "Should add big_numbers with different exponents"
+            Test := AddDifferentExponents
+        test_case:
+            Name := "Should add and normalize to next exponent"
+            Test := AddWithNormalization
+        test_case:
+            Name := "Should add negative numbers"
+            Test := AddNegativeNumbers
+        
+        # Subtraction Tests
+        test_case:
+            Name := "Should subtract zero"
+            Test := SubtractZero
+        test_case:
+            Name := "Should subtract same exponent"
+            Test := SubtractSameExponent
+        test_case:
+            Name := "Should subtract different exponents"
+            Test := SubtractDifferentExponents
+        test_case:
+            Name := "Should subtract into negative"
+            Test := SubtractIntoNegative
+        
+        # Multiplication Tests
+        test_case:
+            Name := "Should multiply by one"
+            Test := MultiplyByOne
+        test_case:
+            Name := "Should multiply by zero"
+            Test := MultiplyByZero
+        test_case:
+            Name := "Should multiply two big_numbers"
+            Test := MultiplyTwoBigNumbers
+        test_case:
+            Name := "Should multiply by float"
+            Test := MultiplyByFloat
+        test_case:
+            Name := "Should multiply with normalization"
+            Test := MultiplyWithNormalization
+        
+        # Division Tests
+        test_case:
+            Name := "Should divide by one"
+            Test := DivideByOne
+        test_case:
+            Name := "Should handle division by zero"
+            Test := DivideByZero
+        test_case:
+            Name := "Should divide two big_numbers"
+            Test := DivideTwoBigNumbers
+        test_case:
+            Name := "Should divide by float"
+            Test := DivideByFloat
+        
+        # Comparison Tests
+        test_case:
+            Name := "Should detect equal numbers"
+            Test := TestEquals
+        test_case:
+            Name := "Should detect not equal numbers"
+            Test := TestNotEquals
+        test_case:
+            Name := "Should detect greater than"
+            Test := TestGreaterThan
+        test_case:
+            Name := "Should detect greater than or equal"
+            Test := TestGreaterThanOrEqual
+        test_case:
+            Name := "Should detect less than"
+            Test := TestLessThan
+        test_case:
+            Name := "Should detect less than or equal"
+            Test := TestLessThanOrEqual
+        test_case:
+            Name := "Should work with abbreviated comparisons"
+            Test := TestAbbreviatedComparisons
+        
+        # Normalization Tests
+        test_case:
+            Name := "Should normalize already normalized number"
+            Test := NormalizeAlreadyNormalized
+        test_case:
+            Name := "Should normalize number less than 1"
+            Test := NormalizeLessThanOne
+        test_case:
+            Name := "Should normalize number greater than 10"
+            Test := NormalizeGreaterThanTen
+        test_case:
+            Name := "Should normalize zero to zero"
+            Test := NormalizeZero
+        test_case:
+            Name := "Should normalize negative number"
+            Test := NormalizeNegative
+        
+        # Set Normalization Tests
+        test_case:
+            Name := "Should set normalize to nearest set"
+            Test := SetNormalizeToSet
+        test_case:
+            Name := "Should not change already set normalized"
+            Test := SetNormalizeAlreadySet
+        
+        # String Formatting Tests
+        test_case:
+            Name := "Should format zero as string"
+            Test := FormatZeroString
+        test_case:
+            Name := "Should format small numbers"
+            Test := FormatSmallNumbers
+        test_case:
+            Name := "Should format thousands with K suffix"
+            Test := FormatThousands
+        test_case:
+            Name := "Should format millions with M suffix"
+            Test := FormatMillions
+        test_case:
+            Name := "Should format large numbers with proper suffixes"
+            Test := FormatLargeNumbers
+        test_case:
+            Name := "Should format negative numbers"
+            Test := FormatNegativeNumbers
+        test_case:
+            Name := "Should fallback to scientific notation for very large"
+            Test := FormatVeryLargeNumbers
+        
+        # Utility Function Tests
+        test_case:
+            Name := "Should calculate cost range with no scaling"
+            Test := CalculateCostRangeNoScaling
+        test_case:
+            Name := "Should calculate cost range with scaling"
+            Test := CalculateCostRangeWithScaling
+        test_case:
+            Name := "Should calculate affordable items"
+            Test := CalculateAffordableItemsTest
+
+    # ===========================================================================
+    # Basic Structure Tests
+    # ===========================================================================
+    
+    CreateDefaultZero():?failure =
+        # Arrange & Act
+        Number := big_number{}
+
+        # Assert
+        if (Number.Value <> 0.0) then return fail("Default value should be 0.0")
+        if (Number.Exponent <> 0) then return fail("Default exponent should be 0")
+        return false
+
+    CreateCustomValues():?failure =
+        # Arrange & Act
+        Number := big_number{Value := 1.5, Exponent := 3}
+
+        # Assert
+        if (Number.Value <> 1.5) then return fail("Value should be 1.5")
+        if (Number.Exponent <> 3) then return fail("Exponent should be 3")
+        return false
+
+    # ===========================================================================
+    # Addition Tests
+    # ===========================================================================
+    
+    AddTwoZeros():?failure =
+        # Arrange
+        NumberA := big_number{}
+        NumberB := big_number{}
+
+        # Act
+        Result := NumberA + NumberB
+
+        # Assert
+        if (Result.Value <> 0.0) then return fail("Sum of zeros should be 0")
+        if (Result.Exponent <> 0) then return fail("Exponent should be 0")
+        return false
+
+    AddSameExponent():?failure =
+        # Arrange
+        NumberA := big_number{Value := 1.5, Exponent := 3}
+        NumberB := big_number{Value := 2.5, Exponent := 3}
+
+        # Act
+        Result := NumberA + NumberB
+
+        # Assert
+        if (Result.Value <> 4.0) then return fail("Values should add to 4.0")
+        if (Result.Exponent <> 3) then return fail("Exponent should remain 3")
+        return false
+
+    AddDifferentExponents():?failure =
+        # Arrange
+        NumberA := big_number{Value := 1.0, Exponent := 3}  # 1000
+        NumberB := big_number{Value := 5.0, Exponent := 2}  # 500
+
+        # Act
+        Result := NumberA + NumberB
+
+        # Assert
+        if (Result.Value <> 1.5) then return fail("Should normalize to 1.5")
+        if (Result.Exponent <> 3) then return fail("Should use higher exponent")
+        return false
+
+    AddWithNormalization():?failure =
+        # Arrange
+        NumberA := big_number{Value := 8.0, Exponent := 3}
+        NumberB := big_number{Value := 3.0, Exponent := 3}
+
+        # Act
+        Result := NumberA + NumberB
+
+        # Assert
+        if (Result.Value < 1.0 or Result.Value > 1.2) then return fail("Should normalize to ~1.1")
+        if (Result.Exponent <> 4) then return fail("Should increase exponent to 4")
+        return false
+
+    AddNegativeNumbers():?failure =
+        # Arrange
+        NumberA := big_number{Value := -1.5, Exponent := 3}
+        NumberB := big_number{Value := -2.5, Exponent := 3}
+
+        # Act
+        Result := NumberA + NumberB
+
+        # Assert
+        if (Result.Value <> -4.0) then return fail("Negative numbers should add to -4.0")
+        return false
+
+    # ===========================================================================
+    # Subtraction Tests
+    # ===========================================================================
+    
+    SubtractZero():?failure =
+        # Arrange
+        NumberA := big_number{Value := 1.5, Exponent := 3}
+        NumberB := big_number{}
+
+        # Act
+        Result := NumberA - NumberB
+
+        # Assert
+        if (Result.Value <> 1.5) then return fail("Subtracting zero should not change value")
+        if (Result.Exponent <> 3) then return fail("Exponent should remain the same")
+        return false
+
+    SubtractSameExponent():?failure =
+        # Arrange
+        NumberA := big_number{Value := 5.0, Exponent := 3}
+        NumberB := big_number{Value := 2.0, Exponent := 3}
+
+        # Act
+        Result := NumberA - NumberB
+
+        # Assert
+        if (Result.Value <> 3.0) then return fail("5 - 2 should equal 3")
+        if (Result.Exponent <> 3) then return fail("Exponent should remain 3")
+        return false
+
+    SubtractDifferentExponents():?failure =
+        # Arrange
+        NumberA := big_number{Value := 2.0, Exponent := 3}  # 2000
+        NumberB := big_number{Value := 5.0, Exponent := 2}  # 500
+
+        # Act
+        Result := NumberA - NumberB
+
+        # Assert
+        if (Result.Value <> 1.5) then return fail("2000 - 500 should normalize to 1.5")
+        if (Result.Exponent <> 3) then return fail("Should use higher exponent")
+        return false
+
+    SubtractIntoNegative():?failure =
+        # Arrange
+        NumberA := big_number{Value := 1.0, Exponent := 3}
+        NumberB := big_number{Value := 2.0, Exponent := 3}
+
+        # Act
+        Result := NumberA - NumberB
+
+        # Assert
+        if (Result.Value <> -1.0) then return fail("1 - 2 should equal -1")
+        return false
+
+    # ===========================================================================
+    # Multiplication Tests
+    # ===========================================================================
+    
+    MultiplyByOne():?failure =
+        # Arrange
+        Number := big_number{Value := 1.5, Exponent := 3}
+
+        # Act
+        Result := Number * 1.0
+
+        # Assert
+        if (Result.Value <> 1.5) then return fail("Multiplying by 1 should not change value")
+        if (Result.Exponent <> 3) then return fail("Exponent should not change")
+        return false
+
+    MultiplyByZero():?failure =
+        # Arrange
+        Number := big_number{Value := 1.5, Exponent := 3}
+
+        # Act
+        Result := Number * 0.0
+
+        # Assert
+        if (Result.Value <> 0.0) then return fail("Multiplying by 0 should give 0")
+        return false
+
+    MultiplyTwoBigNumbers():?failure =
+        # Arrange
+        NumberA := big_number{Value := 2.0, Exponent := 3}
+        NumberB := big_number{Value := 3.0, Exponent := 2}
+
+        # Act
+        Result := NumberA * NumberB
+
+        # Assert
+        if (Result.Value <> 6.0) then return fail("2 * 3 should equal 6")
+        if (Result.Exponent <> 5) then return fail("Exponents should add: 3 + 2 = 5")
+        return false
+
+    MultiplyByFloat():?failure =
+        # Arrange
+        Number := big_number{Value := 2.0, Exponent := 3}
+
+        # Act
+        Result := Number * 3.5
+
+        # Assert
+        if (Result.Value <> 7.0) then return fail("2 * 3.5 should equal 7")
+        if (Result.Exponent <> 3) then return fail("Exponent should remain the same")
+        return false
+
+    MultiplyWithNormalization():?failure =
+        # Arrange
+        Number := big_number{Value := 5.0, Exponent := 3}
+
+        # Act
+        Result := Number * 25.0
+
+        # Assert
+        if (Result.Value < 1.2 or Result.Value > 1.3) then return fail("Should normalize to ~1.25")
+        if (Result.Exponent <> 5) then return fail("Should normalize exponent")
+        return false
+
+    # ===========================================================================
+    # Division Tests
+    # ===========================================================================
+    
+    DivideByOne():?failure =
+        # Arrange
+        Number := big_number{Value := 1.5, Exponent := 3}
+
+        # Act
+        Result := Number / 1.0
+
+        # Assert
+        if (Result.Value <> 1.5) then return fail("Dividing by 1 should not change value")
+        if (Result.Exponent <> 3) then return fail("Exponent should not change")
+        return false
+
+    DivideByZero():?failure =
+        # Arrange
+        Number := big_number{Value := 1.5, Exponent := 3}
+
+        # Act
+        Result := Number / 0.0
+
+        # Assert
+        if (Result.Exponent <> 308) then return fail("Division by zero should return very large number")
+        return false
+
+    DivideTwoBigNumbers():?failure =
+        # Arrange
+        NumberA := big_number{Value := 6.0, Exponent := 5}
+        NumberB := big_number{Value := 2.0, Exponent := 3}
+
+        # Act
+        Result := NumberA / NumberB
+
+        # Assert
+        if (Result.Value <> 3.0) then return fail("6 / 2 should equal 3")
+        if (Result.Exponent <> 2) then return fail("Exponents should subtract: 5 - 3 = 2")
+        return false
+
+    DivideByFloat():?failure =
+        # Arrange
+        Number := big_number{Value := 8.0, Exponent := 3}
+
+        # Act
+        Result := Number / 2.0
+
+        # Assert
+        if (Result.Value <> 4.0) then return fail("8 / 2 should equal 4")
+        if (Result.Exponent <> 3) then return fail("Exponent should remain the same")
+        return false
+
+    # ===========================================================================
+    # Comparison Tests
+    # ===========================================================================
+    
+    TestEquals():?failure =
+        # Arrange
+        NumberA := big_number{Value := 1.5, Exponent := 3}
+        NumberB := big_number{Value := 1.5, Exponent := 3}
+
+        # Act & Assert
+        if (not NumberA.Equals[NumberB]) then return fail("Equal numbers should be detected as equal")
+        return false
+
+    TestNotEquals():?failure =
+        # Arrange
+        NumberA := big_number{Value := 1.5, Exponent := 3}
+        NumberB := big_number{Value := 2.5, Exponent := 3}
+
+        # Act & Assert
+        if (not NumberA.NotEquals[NumberB]) then return fail("Different numbers should be detected as not equal")
+        return false
+
+    TestGreaterThan():?failure =
+        # Arrange
+        NumberA := big_number{Value := 2.0, Exponent := 3}
+        NumberB := big_number{Value := 1.0, Exponent := 3}
+
+        # Act & Assert
+        if (not NumberA.GreaterThan[NumberB]) then return fail("2 should be greater than 1")
+        return false
+
+    TestGreaterThanOrEqual():?failure =
+        # Arrange
+        NumberA := big_number{Value := 2.0, Exponent := 3}
+        NumberB := big_number{Value := 2.0, Exponent := 3}
+
+        # Act & Assert
+        if (not NumberA.GreaterThanOrEquals[NumberB]) then return fail("2 should be greater than or equal to 2")
+        return false
+
+    TestLessThan():?failure =
+        # Arrange
+        NumberA := big_number{Value := 1.0, Exponent := 3}
+        NumberB := big_number{Value := 2.0, Exponent := 3}
+
+        # Act & Assert
+        if (not NumberA.LessThan[NumberB]) then return fail("1 should be less than 2")
+        return false
+
+    TestLessThanOrEqual():?failure =
+        # Arrange
+        NumberA := big_number{Value := 1.0, Exponent := 3}
+        NumberB := big_number{Value := 1.0, Exponent := 3}
+
+        # Act & Assert
+        if (not NumberA.LessThanOrEquals[NumberB]) then return fail("1 should be less than or equal to 1")
+        return false
+
+    TestAbbreviatedComparisons():?failure =
+        # Arrange
+        NumberA := big_number{Value := 2.0, Exponent := 3}
+        NumberB := big_number{Value := 2.0, Exponent := 3}
+
+        # Act & Assert
+        if (not NumberA.EQ[NumberB]) then return fail("EQ abbreviation should work")
+        if (not NumberA.GTE[NumberB]) then return fail("GTE abbreviation should work")
+        if (not NumberA.LTE[NumberB]) then return fail("LTE abbreviation should work")
+        return false
+
+    # ===========================================================================
+    # Normalization Tests
+    # ===========================================================================
+    
+    NormalizeAlreadyNormalized():?failure =
+        # Arrange
+        Number := big_number{Value := 1.5, Exponent := 3}
+
+        # Act
+        Result := Normalize(Number)
+
+        # Assert
+        if (Result.Value <> 1.5) then return fail("Already normalized number should not change")
+        if (Result.Exponent <> 3) then return fail("Exponent should not change")
+        return false
+
+    NormalizeLessThanOne():?failure =
+        # Arrange
+        Number := big_number{Value := 0.15, Exponent := 4}
+
+        # Act
+        Result := Normalize(Number)
+
+        # Assert
+        if (Result.Value <> 1.5) then return fail("Should normalize to 1.5")
+        if (Result.Exponent <> 3) then return fail("Should decrease exponent to 3")
+        return false
+
+    NormalizeGreaterThanTen():?failure =
+        # Arrange
+        Number := big_number{Value := 15.0, Exponent := 2}
+
+        # Act
+        Result := Normalize(Number)
+
+        # Assert
+        if (Result.Value <> 1.5) then return fail("Should normalize to 1.5")
+        if (Result.Exponent <> 3) then return fail("Should increase exponent to 3")
+        return false
+
+    NormalizeZero():?failure =
+        # Arrange
+        Number := big_number{Value := 0.0, Exponent := 5}
+
+        # Act
+        Result := Normalize(Number)
+
+        # Assert
+        if (Result.Value <> 0.0) then return fail("Zero should remain zero")
+        if (Result.Exponent <> 0) then return fail("Zero exponent should be 0")
+        return false
+
+    NormalizeNegative():?failure =
+        # Arrange
+        Number := big_number{Value := -15.0, Exponent := 2}
+
+        # Act
+        Result := Normalize(Number)
+
+        # Assert
+        if (Result.Value <> -1.5) then return fail("Should normalize to -1.5 while preserving sign")
+        if (Result.Exponent <> 3) then return fail("Should increase exponent to 3")
+        return false
+
+    # ===========================================================================
+    # Set Normalization Tests
+    # ===========================================================================
+    
+    SetNormalizeToSet():?failure =
+        # Arrange
+        Number := big_number{Value := 1.5, Exponent := 4}
+
+        # Act
+        Result := NormalizeToNearestNumberSet(Number)
+
+        # Assert
+        if (Result.Value <> 15.0) then return fail("Should adjust to 15.0")
+        if (Result.Exponent <> 3) then return fail("Should adjust exponent to nearest set (3)")
+        return false
+
+    SetNormalizeAlreadySet():?failure =
+        # Arrange
+        Number := big_number{Value := 15.0, Exponent := 3}
+
+        # Act
+        Result := NormalizeToNearestNumberSet(Number)
+
+        # Assert
+        if (Result.Value <> 15.0) then return fail("Already set normalized should not change")
+        if (Result.Exponent <> 3) then return fail("Exponent should remain 3")
+        return false
+
+    # ===========================================================================
+    # String Formatting Tests
+    # ===========================================================================
+    
+    FormatZeroString():?failure =
+        # Arrange
+        Number := big_number{}
+
+        # Act
+        Result := ToString(Number)
+
+        # Assert
+        if (not Result = "0") then return fail("Zero should format as '0'")
+        return false
+
+    FormatSmallNumbers():?failure =
+        # Arrange
+        Number := big_number{Value := 123.0, Exponent := 0}
+
+        # Act
+        Result := ToString(Number)
+
+        # Assert
+        if (not Result = "123") then return fail("Small numbers should format without suffix")
+        return false
+
+    FormatThousands():?failure =
+        # Arrange
+        Number := big_number{Value := 1.5, Exponent := 3}
+
+        # Act
+        Result := ToString(Number)
+
+        # Assert
+        if (not Result = "1.50K") then return fail("Expected '1.50K', got '{Result}'")
+        return false
+
+    FormatMillions():?failure =
+        # Arrange
+        Number := big_number{Value := 2.3, Exponent := 6}
+
+        # Act
+        Result := ToString(Number)
+
+        # Assert
+        if (not Result = "2.30M") then return fail("Expected '2.30M', got '{Result}'")
+        return false
+
+
+    FormatLargeNumbers():?failure =
+        # Arrange
+        Number := big_number{Value := 1.5, Exponent := 33}
+
+        # Act
+        Result := ToString(Number)
+
+        # Assert
+        if (not Result = "1.50De") then return fail("Expected '1.50B', got '{Result}'")
+        return false
+
+    FormatNegativeNumbers():?failure =
+        # Arrange
+        Number := big_number{Value := -1.5, Exponent := 3}
+
+        # Act
+        Result := ToString(Number)
+
+        # Assert
+        if (not Result = "-1.50K") then return fail("Expected '-1.50K', got '{Result}'")
+        return false
+
+    FormatVeryLargeNumbers():?failure =
+        # Arrange
+        Number := big_number{Value := 1.5, Exponent := 500}
+
+        # Act
+        Result := ToString(Number)
+
+        # Assert - Should contain 'e' for scientific notation
+        if (Result.Length <= 5) then return fail("Very large numbers should use scientific notation")
+        return false
+
+    # ===========================================================================
+    # Game Utility Function Tests
+    # ===========================================================================
+    
+    CalculateCostRangeNoScaling():?failure =
+        # Arrange
+        BaseCost := big_number{Value := 1.0, Exponent := 2}  # 100
+        Start := 0
+        Count := 5
+        CommonRatio := 1.0
+
+        # Act
+        Result := CalculateCostRange(BaseCost, Start, Count, CommonRatio)
+
+        # Assert - Should be 5 * 100 = 500
+        if (Result.Value <> 5.0) then return fail("Cost with no scaling should be 5 * 100")
+        if (Result.Exponent <> 2) then return fail("Exponent should remain 2")
+        return false
+
+    CalculateCostRangeWithScaling():?failure =
+        # Arrange
+        BaseCost := big_number{Value := 1.0, Exponent := 2}  # 100
+        Start := 0
+        Count := 3
+        CommonRatio := 2.0
+
+        # Act
+        Result := CalculateCostRange(BaseCost, Start, Count, CommonRatio)
+
+        # Assert
+        # Should be 100 * (2^3 - 2^0) / (2 - 1) = 100 * 7 = 700
+        if (Result.Value <> 7.0) then return fail("Cost with scaling should calculate geometric series")
+        if (Result.Exponent <> 2) then return fail("Base exponent should be maintained")
+        return false
+
+    CalculateAffordableItemsTest():?failure =
+        # Arrange
+        CurrentMoney := big_number{Value := 1.0, Exponent := 3}  # 1000
+        BaseCost := big_number{Value := 1.0, Exponent := 2}     # 100
+        AmountOwned := 0
+        CommonRatio := 1.0
+
+        # Act
+        Result := CalculateAffordableItems(CurrentMoney, BaseCost, AmountOwned, CommonRatio)
+
+        # Assert
+        if (Result <> 10) then return fail("Should be able to afford 10 items (1000 / 100)")
+        return false
+
+# ===========================================================================
+# Testing Framework Implementation
+# ===========================================================================
+# 
+# The following section contains the core testing framework infrastructure
+# that enables automatic test discovery, execution, and reporting.
+# ===========================================================================
+
+# Test factory device that discovers and runs all test suites
+test_factory_device := class(creative_device):
+
+    OnBegin<override>()<suspends>:void=
+        TestSuites := LoadTestDevices(Self)
+
+        var SuiteResults:[test_suite][]tuple(test_case, ?failure) = map{}
+        for(Suite : TestSuites):
+            TestCases := Suite.GetTests()
+            TestCaseResults := for(TestCase:TestCases). (TestCase, TestCase.Test())
+            if(set SuiteResults[Suite] = TestCaseResults) {}
+
+        var PrintResults:string = ""
+        var Passes:int = 0
+        var Fails:int = 0
+        var Total:int = 0
+        for(Suite -> Results:SuiteResults):
+            set PrintResults += "\n-\n✎ {Suite.GetName()}\n-"
+
+            for(Result : Results):
+                TestCase := Result(0)
+                MaybeFail := Result(1)
+                # (TestCase, MaybeFail) := Result
+                if(Fail := MaybeFail?):
+                    set Fails += 1
+                    set PrintResults += "\n\t❌ {TestCase.Name}\n\t\t➥ {Fail.Msg}"
+                else:
+                    set Passes += 1
+                    set PrintResults += "\n\t✔ {TestCase.Name}"
+                set Total += 1
+
+        set PrintResults += "\n-\n ✔ Pass  = {Passes}\n ❌ Fail  = {Fails}\n ➰ Total = {Total}\n-"
+        if (TestSuites.Length = 0):
+            set PrintResults += "\n➰ NONE\t➰ NONE\t➰ NONE\t➰ NONE\t➰ NONE\t➰\n-"
+            set PrintResults += "\n "
+        else:
+            if (Fails <= 0):
+                set PrintResults += "\n✔ PASS\t✔ PASS\t✔ PASS\t✔ PASS\t✔ PASS\t✔\n-"
+            else:
+                set PrintResults += "\n❌ FAIL\t❌ FAIL\t❌ FAIL\t❌ FAIL\t❌ FAIL\t❌\n-"
+        Print(PrintResults)
+
+# Core testing framework types and functions
+test_tag<public> := class(tag){}
+test := type{_():?failure}
+fail<public>(Msg:string)<transacts>:?failure = option. failure. Msg := Msg
+failure<public> := struct:
+    Msg<public>:string = "Fail"
+
+test_case<public> := class():
+    Name<public>:string = "<No Name>"
+    Test<public>:test
+
+test_suite<public> := interface<unique>():
+    GetName<public>():string
+    GetTests<public>():[]test_case
+
+LoadTestDevices<public>(BaseDevice:creative_device):[]test_suite=
+    TaggedDevices := BaseDevice.FindCreativeObjectsWithTag(test_tag{})
+    for(Index->Tagged:TaggedDevices, Device := test_suite[Tagged]). Device
+	
+BIGNUM INTERACTIVE DEMO DEVICE
+# ===============================================================================
+# BigNum Demo Device - Interactive Demonstration of BigNum Module
+# ===============================================================================
+#
+# Author: VukeFN
+# 
+# This device provides an interactive way to test and demonstrate the BigNum module
+# using button_device controls and hud_message_device display.
+# 
+# Setup Instructions:
+# 1. Place this device on your island
+# 2. Place 6 button_device objects near it for the different operations
+# 3. Place 1 hud_message_device for displaying the current value
+# 4. Configure the device properties to link the buttons and HUD display
+# 5. Test the BigNum operations by interacting with the buttons
+# 
+# Features Demonstrated:
+# - Basic arithmetic operations (add, multiply)
+# - Large number handling (millions, billions, trillions)
+# - String formatting with K/M/B/T suffixes
+# - Scientific notation for very large numbers
+#
+# **Try This Sequence:**
+# 1. Add Thousand (several times) → See: 1.00K, 2.00K, 3.00K...
+# 2. Add Million → See jump to: 1.00M+
+# 3. Multiply by 100 → See: 100M+  
+# 4. Add Billion → See: 1.10B+
+# 5. Multiply by 10 & 100 repeatedly → Watch it grow to trillions!
+# ===============================================================================
+
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { BigNum }
+
+bignum_demo_device := class(creative_device):
+    
+    # ===========================================================================
+    # Device Configuration - Set these in the UEFN editor
+    # ===========================================================================
+    
+    @editable
+    AddThousandButton:button_device = button_device{}
+    
+    @editable  
+    AddMillionButton:button_device = button_device{}
+    
+    @editable
+    MultiplyBy10Button:button_device = button_device{}
+    
+    @editable
+    MultiplyBy100Button:button_device = button_device{}
+    
+    @editable
+    AddBillionButton:button_device = button_device{}
+    
+    @editable
+    ResetButton:button_device = button_device{}
+    
+    @editable
+    DisplayHUD:hud_message_device = hud_message_device{}
+
+    # ===========================================================================
+    # Internal State
+    # ===========================================================================
+    
+    var CurrentValue:big_number = big_number{Value := 0.0, Exponent := 0}
+
+    # ===========================================================================
+    # Device Lifecycle
+    # ===========================================================================
+    
+    OnBegin<override>()<suspends>:void =
+        # Configure button texts and interactions
+        SetupButtons()
+        
+        # Subscribe to button events
+        AddThousandButton.InteractedWithEvent.Subscribe(OnAddThousand)
+        AddMillionButton.InteractedWithEvent.Subscribe(OnAddMillion)
+        MultiplyBy10Button.InteractedWithEvent.Subscribe(OnMultiplyBy10)
+        MultiplyBy100Button.InteractedWithEvent.Subscribe(OnMultiplyBy100)
+        AddBillionButton.InteractedWithEvent.Subscribe(OnAddBillion)
+        ResetButton.InteractedWithEvent.Subscribe(OnReset)
+        
+        # Show initial value
+        UpdateDisplay()
+
+    # ===========================================================================
+    # Button Configuration
+    # ===========================================================================
+    S2M<localizes>(S:string):message="{S}"
+    
+    SetupButtons():void =
+        # Configure button interaction texts
+        AddThousandButton.SetInteractionText(S2M("Add 1,000"))
+        AddThousandButton.SetInteractionTime(0.1)
+        
+        AddMillionButton.SetInteractionText(S2M("Add 1 Million"))
+        AddMillionButton.SetInteractionTime(0.1)
+        
+        MultiplyBy10Button.SetInteractionText(S2M("Multiply by 10"))
+        MultiplyBy10Button.SetInteractionTime(0.1)
+        
+        MultiplyBy100Button.SetInteractionText(S2M("Multiply by 100"))
+        MultiplyBy100Button.SetInteractionTime(0.1)
+        
+        AddBillionButton.SetInteractionText(S2M("Add 1 Billion"))
+        AddBillionButton.SetInteractionTime(0.1)
+        
+        ResetButton.SetInteractionText(S2M("Reset to Zero"))
+        ResetButton.SetInteractionTime(0.5)  # Longer hold to prevent accidents
+
+    # ===========================================================================
+    # Button Event Handlers
+    # ===========================================================================
+    
+    OnAddThousand(Agent:agent):void =
+        # Add 1,000 to current value
+        ThousandValue := big_number{Value := 1.0, Exponent := 3}
+        set CurrentValue = CurrentValue + ThousandValue
+        UpdateDisplay()
+        
+        # Show feedback to the player
+        DisplayHUD.Show(Agent, S2M("Added 1,000!"), ?DisplayTime := 2.0)
+
+    OnAddMillion(Agent:agent):void =
+        # Add 1,000,000 to current value  
+        MillionValue := big_number{Value := 1.0, Exponent := 6}
+        set CurrentValue = CurrentValue + MillionValue
+        UpdateDisplay()
+        
+        # Show feedback to the player
+        DisplayHUD.Show(Agent, S2M("Added 1 Million!"), ?DisplayTime := 2.0)
+
+    OnMultiplyBy10(Agent:agent):void =
+        # Multiply current value by 10
+        set CurrentValue = CurrentValue * 10.0
+        UpdateDisplay()
+        
+        # Show feedback to the player
+        DisplayHUD.Show(Agent, S2M("Multiplied by 10!"), ?DisplayTime := 2.0)
+
+    OnMultiplyBy100(Agent:agent):void =
+        # Multiply current value by 100
+        set CurrentValue = CurrentValue * 100.0
+        UpdateDisplay()
+        
+        # Show feedback to the player
+        DisplayHUD.Show(Agent, S2M("Multiplied by 100!"), ?DisplayTime := 2.0)
+
+    OnAddBillion(Agent:agent):void =
+        # Add 1,000,000,000 to current value
+        BillionValue := big_number{Value := 1.0, Exponent := 9}
+        set CurrentValue = CurrentValue + BillionValue
+        UpdateDisplay()
+        
+        # Show feedback to the player
+        DisplayHUD.Show(Agent, S2M("Added 1 Billion!"), ?DisplayTime := 2.0)
+
+    OnReset(Agent:agent):void =
+        # Reset to zero
+        set CurrentValue = big_number{Value := 0.0, Exponent := 0}
+        UpdateDisplay()
+        
+        # Show feedback to the player
+        DisplayHUD.Show(Agent, S2M("Reset to Zero!"), ?DisplayTime := 2.0)
+
+    # ===========================================================================
+    # Display Management
+    # ===========================================================================
+    
+    UpdateDisplay():void =
+        # Format the current value and display it
+        FormattedValue := ToString(CurrentValue)
+        DisplayMessage := "Current Value: {FormattedValue}"
+        
+        # Set persistent display
+        DisplayHUD.SetDisplayTime(0.0)  # Persistent display
+        DisplayHUD.Show(S2M(DisplayMessage))
+        
+        # Also print to console for debugging
+        Print("BigNum Demo - Current Value: {FormattedValue}")
+
+    # ===========================================================================
+    # Utility Functions for Advanced Testing
+    # ===========================================================================
+    
+    # Call this function to test very large numbers
+    TestVeryLargeNumbers():void =
+        # Create some massive numbers to test scientific notation
+        TestValues := array:
+            big_number{Value := 1.5, Exponent := 100}    # 1.5 * 10^100
+            big_number{Value := 9.99, Exponent := 500}   # 9.99 * 10^500
+            big_number{Value := 2.5, Exponent := 1000}   # 2.5 * 10^1000
+        
+        for (TestValue : TestValues):
+            FormattedValue := ToString(TestValue)
+            Print("Test Large Number: {FormattedValue}")
+
+    # Call this function to test arithmetic operations
+    TestArithmetic():void =
+        # Test some arithmetic operations
+        A := big_number{Value := 1.5, Exponent := 6}  # 1.5M
+        B := big_number{Value := 2.0, Exponent := 3}  # 2K
+        
+        Sum := A + B
+        Product := A * B
+        BNQuotient := A / B
+        
+        Print("Arithmetic Test:")
+        Print("A = {ToString(A)}")
+        Print("B = {ToString(B)}")
+        Print("A + B = {ToString(Sum)}")
+        Print("A * B = {ToString(Product)}")
+        Print("A / B = {ToString(BNQuotient)}")
+
+    # Call this function to test comparison operations  
+    TestComparisons():void =
+        # Test comparison operations
+        Small := big_number{Value := 1.0, Exponent := 3}   # 1K
+        Large := big_number{Value := 1.0, Exponent := 6}   # 1M
+        
+        Print("Comparison Test:")
+        Print("Small = {ToString(Small)}")
+        Print("Large = {ToString(Large)}")
+        Print("Small < Large: {if (Small.LT[Large]) then "true" else "false"}")
+        Print("Large > Small: {if (Large.GT[Small]) then "true" else "false"}")
+        Print("Small == Small: {if (Small.EQ[Small]) then "true" else "false"}")
+		

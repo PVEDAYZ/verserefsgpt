@@ -1,0 +1,151 @@
+HEALTH_MODIFIER_PERPLAYER_DEVICE
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /Fortnite.com/Characters }
+using { /Verse.org/Verse }
+
+# Code Created by : Dragon 
+# Connect with me : Youtube: https://youtube.com/@YO_ITS_DRAGON
+# UPDATED
+<# Modification help below provided by Mineblo : https://x.com/MinebleFN
+This code has been updated to include : if(CurrentPlayer := player[Agent?]):
+#>
+
+
+# A Verse-authored creative device that can be placed in a level
+Health_Modifier_PerPlayer_Device := class(creative_device):
+
+    @editable
+    IncreaseHealthTrigger : trigger_device = trigger_device{}
+
+    @editable
+    DecreaseHealthTrigger : trigger_device = trigger_device{}
+
+    @editable
+    IncreaseShieldTrigger : trigger_device = trigger_device{}
+
+    @editable
+    DecreaseShieldTrigger : trigger_device = trigger_device{}
+
+    # Runs when the device is started in a running game
+    OnBegin<override>()<suspends>:void=
+        # TODO: Replace this with your code
+        IncreaseHealthTrigger.Enable()
+        DecreaseHealthTrigger.Enable()
+        IncreaseShieldTrigger.Enable()
+        DecreaseHealthTrigger.Enable()
+        IncreaseHealthTrigger.TriggeredEvent.Subscribe(IncreasePlayerHealth)
+        DecreaseHealthTrigger.TriggeredEvent.Subscribe(DecreasePlayerHealth)
+        IncreaseShieldTrigger.TriggeredEvent.Subscribe(IncreasePlayerShield)
+        DecreaseShieldTrigger.TriggeredEvent.Subscribe(DecreasePlayerShield)
+
+
+    # HEALTH     
+
+    # Function to increase Health by 10
+    IncreasePlayerHealth(Agent : ?agent): void =
+        if(CurrentPlayer := player[Agent?]):
+            if(PlayerCharacter : fort_character = CurrentPlayer.GetFortCharacter[]):
+                PlayerCharacter.SetHealth(PlayerCharacter.GetHealth() + 10.0) # Enter amount to increase Health
+                Print("Health increased")     
+
+
+    # Function to decrease Health by 10
+    DecreasePlayerHealth(Agent : ?agent): void =
+        if(CurrentPlayer := player[Agent?]):
+            if(PlayerCharacter : fort_character = CurrentPlayer.GetFortCharacter[]):
+                PlayerCharacter.SetHealth(PlayerCharacter.GetHealth() - 10.0) # Enter amount to decrease Health
+                Print("Health decreased")
+
+    # SHIELD     
+
+    # Function to increase Shield by 10
+    IncreasePlayerShield(Agent : ?agent): void =
+        if(CurrentPlayer := player[Agent?]):
+            if(PlayerCharacter : fort_character = CurrentPlayer.GetFortCharacter[]):
+                PlayerCharacter.SetShield(PlayerCharacter.GetShield() + 10.0) # Enter amount to increase Shield
+                Print("Shield increased")     
+
+
+    # Function to decrease Shield by 10
+    DecreasePlayerShield(Agent : ?agent): void =
+        if(CurrentPlayer := player[Agent?]):
+            if(PlayerCharacter : fort_character = CurrentPlayer.GetFortCharacter[]):
+                PlayerCharacter.SetShield(PlayerCharacter.GetShield() - 10.0) # Enter amount to decrease Shield
+                Print("Shield decreased")                
+                    
+					
+HEALTH_MODIFIER_ALL_PLAYERS_DEVICE
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /Fortnite.com/Characters }
+using { /Fortnite.com/Playspaces }
+using { /Verse.org/Verse }
+
+# Code Created by : Dragon 
+# Connect with me : Youtube: https://youtube.com/@YO_ITS_DRAGON
+
+
+# A Verse-authored creative device that can be placed in a level
+Health_Modifier_All_Players_device := class(creative_device):
+
+    @editable
+    IncreaseHealthTrigger : trigger_device = trigger_device{}
+
+    @editable
+    DecreaseHealthTrigger : trigger_device = trigger_device{}
+
+    @editable
+    IncreaseShieldTrigger : trigger_device = trigger_device{}
+
+    @editable
+    DecreaseShieldTrigger : trigger_device = trigger_device{}
+
+    # Runs when the device is started in a running game
+    OnBegin<override>()<suspends>:void=
+        # TODO: Replace this with your code
+        IncreaseHealthTrigger.Enable()
+        DecreaseHealthTrigger.Enable()
+        IncreaseShieldTrigger.Enable()
+        DecreaseHealthTrigger.Enable()
+        IncreaseHealthTrigger.TriggeredEvent.Subscribe(IncreasePlayerHealth)
+        DecreaseHealthTrigger.TriggeredEvent.Subscribe(DecreasePlayerHealth)
+        IncreaseShieldTrigger.TriggeredEvent.Subscribe(IncreasePlayerShield)
+        DecreaseShieldTrigger.TriggeredEvent.Subscribe(DecreasePlayerShield)
+
+
+    # HEALTH     
+
+    # Function to increase Health by 10
+    IncreasePlayerHealth(Player : ?agent): void =
+        Playspace := GetPlayspace()
+        for (Agent : Playspace.GetPlayers(), FortCharacter := Agent.GetFortCharacter[]):
+                FortCharacter.SetHealth(FortCharacter.GetHealth() + 10.0) # Enter amount to decrease Health
+                Print("All Players Health Increased")
+
+
+    # Function to decrease Health by 10
+    DecreasePlayerHealth(Player : ?agent): void =
+        Playspace := GetPlayspace()
+        for (Agent : Playspace.GetPlayers(), FortCharacter := Agent.GetFortCharacter[]):
+                FortCharacter.SetHealth(FortCharacter.GetHealth() - 10.0) # Enter amount to decrease Health
+                Print("All Players Health Decreased")
+
+    # SHIELD     
+
+    # Function to increase Shield by 10
+    IncreasePlayerShield(Player : ?agent): void =
+        Playspace := GetPlayspace()
+        for (Agent : Playspace.GetPlayers(), FortCharacter := Agent.GetFortCharacter[]):
+                FortCharacter.SetShield(FortCharacter.GetShield() + 10.0) # Enter amount to increase Shield
+                Print("All Players Shield Increased")     
+
+
+    # Function to decrease Shield by 10
+    DecreasePlayerShield(Player : ?agent): void =
+        Playspace := GetPlayspace()
+        for (Agent : Playspace.GetPlayers(), FortCharacter := Agent.GetFortCharacter[]):
+                FortCharacter.SetShield(FortCharacter.GetShield() - 10.0) # Enter amount to decrease Shield
+                Print("All Players Shield Decreased")

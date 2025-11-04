@@ -1,0 +1,47 @@
+using { /Verse.org/Simulation }
+using { /Fortnite.com/Devices }
+
+<# IMPORTANT:
+    - Register the top player based on a tracker value on each team on a reference. 
+    - This is scalable, which means you can use this for a simple Red Vs Blue (2 Teams) or for any mode that has multiple teams.
+
+    - Script created by Hafemi
+#>
+
+teams_top_player_reference_updater := class(creative_device):
+
+    @editable TeamConfigs: []team_configuration = array{}
+
+    @editable Tracker: tracker_device = tracker_device{}
+    @editable UpdateFrequency: float = 5.0
+
+    OnBegin<override>()<suspends>:void=
+        loop:
+            UpdateTeamReferences()
+            Sleep(UpdateFrequency)
+
+    UpdateTeamReferences():void=
+        for:
+            Team: TeamConfigs
+            TopPlayer := GetTopPlayer[Team.Settings]
+            not Team.Reference.IsReferenced[TopPlayer]
+        do:
+            Team.Reference.Register(TopPlayer)
+
+    GetTopPlayer(Settings: team_settings_and_inventory_device)<transacts><decides>:agent=
+        var MaybeTopPlayer: ?agent = false
+        var TopElims: int = -1
+
+        for:
+            Player: GetPlayspace().GetPlayers()
+            Settings.IsOnTeam[Player]
+            TopElims < Tracker.GetValue(Player)
+        do:
+            set MaybeTopPlayer = option{Player}
+            set TopElims = Tracker.GetValue(Player)
+
+        MaybeTopPlayer?
+
+team_configuration := class<concrete>:
+    @editable Reference: player_reference_device = player_reference_device{}
+    @editable Settings: team_settings_and_inventory_device = team_settings_and_inventory_device{}

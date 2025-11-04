@@ -1,0 +1,40 @@
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+
+headshot_audio := class(creative_device):
+
+    @editable
+    Tracker : tracker_device = tracker_device{}
+
+    @editable
+    AudioPlayer : audio_player_device = audio_player_device{}
+
+    
+    var HeadshotEliminationCounts : [agent]int = map{}
+
+    OnBegin<override>()<suspends>:void=
+       
+        for (Player : GetPlayspace().GetPlayers()):
+            if (Agent := player[Player]):
+                if (set HeadshotEliminationCounts[Agent] = Tracker.GetValue(Agent)) {}
+
+        
+        GetPlayspace().PlayerAddedEvent().Subscribe(OnPlayerAdded)
+
+        
+        spawn{PollHeadshotEliminations()}
+
+    OnPlayerAdded(Player:player):void=
+        if (Agent := player[Player]):
+            if (set HeadshotEliminationCounts[Agent] = Tracker.GetValue(Agent)) {}
+
+    PollHeadshotEliminations()<suspends>:void=
+        loop:
+            Sleep(0.25) # Check every 0.25 seconds
+            for (Agent -> PreviousCount : HeadshotEliminationCounts):
+                CurrentCount := Tracker.GetValue(Agent)
+                if (CurrentCount > PreviousCount):
+                    AudioPlayer.Play(Agent)
+                    Print("Headshot elimination detected for player!")
+                    if (set HeadshotEliminationCounts[Agent] = CurrentCount) {}

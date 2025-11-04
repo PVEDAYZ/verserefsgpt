@@ -1,0 +1,103 @@
+using { /Fortnite.com/Devices } 
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+
+<# 
+Code by: Dragon : https://youtube.com/@yo_its_dragon
+
+This Sequential Trigger System allows you to emphasize the order of activations for events or actions
+and is very useful for when player interactions are required to progress through a set of objectives or stages.
+This snippet is highly versatile, allowing you to place your own logic to call events when an event triggered is true as well as if an event is not triggered and returns as false.
+
+Game Modes this is great for: 
+    Puzzle Games
+    Timed Trails
+    Adventure Maps
+    Obby/Parkour Challenges
+
+This is a good example of how to mix control flows of if,else with sleep functions.
+
+I hope you find this helpful. I'm still learning and growing with this :)   
+   
+
+#>
+
+SequentialTriggerSystem := class(creative_device):
+
+    @editable
+    Trigger1 : trigger_device = trigger_device{}
+    @editable
+    Trigger2 : trigger_device = trigger_device{}
+    @editable
+    Trigger3 : trigger_device = trigger_device{}
+    # add more triggers below if you need to do so
+
+
+    # State variables to track event progression
+    Event1Triggered : logic = true
+    Event2Triggered : logic = true
+    Event3Triggered : logic = true
+    # Add more triggers below if you need to do so
+
+
+    OnBegin<override>()<suspends> : void =
+        # Enable all Triggers 
+        Trigger1.Enable()
+        Trigger2.Enable()
+        Trigger3.Enable()
+        Print("Waiting for Trigger 1")
+        # Sends an event upon Trigger1 being triggered. 
+        Trigger1.TriggeredEvent.Subscribe(HandleTrigger1)
+
+    # Handle Trigger 1 Activation
+    HandleTrigger1(Agent:?agent):void =
+        if(Event1Triggered = true):
+            Print("Trigger 1 Activated!")
+            spawn:
+                WaitforTrigger2()
+
+
+    WaitforTrigger2()<suspends>:void=
+        Print("Waiting for Trigger 2")
+        Sleep(3.0)# Set your wait time here
+        Print("Waited 3 seconds")
+        # If Trigger2 is not triggered within set sleep time frame, then send events
+        if (Event2Triggered = false):
+            Print("Trigger 2 not activated within 3 seconds")
+        else:
+            Print("Trigger 2 not activated within 3 seconds")
+        
+        # Sends an event upon Trigger2 being triggered. 
+        Trigger2.TriggeredEvent.Subscribe(HandleTrigger2)
+
+            
+    # Handle Trigger 2 Activation 
+    HandleTrigger2(Agent:?agent):void=
+        Print("Trigger 2 Activated!")
+        if (Event2Triggered = true):
+            Print("Trigger 2 Activated!")
+        spawn: 
+            WaitforTrigger3()
+    
+    WaitforTrigger3()<suspends>:void=
+        Print("Waiting for Trigger 3")
+        Sleep(3.0) # Set your wait time here
+        Print("Waited 3 seconds")
+        # If Trigger3 is not triggered within set sleep time frame, then send events
+        if (Event3Triggered = false):
+            Print("Trigger 3 not activated within 3 seconds")
+        else:
+            Print("Trigger 3 not activated within 3 seconds")
+
+        # Sends an event upon Trigger3 being triggered. 
+        Trigger3.TriggeredEvent.Subscribe(HandleTrigger3)
+
+
+    # Send events upon the last trigger being activated
+    # Handle Trigger 3 Activation 
+    HandleTrigger3(Agent : ?agent):void=
+        Print("Trigger 3 Activated!")
+        if (Event3Triggered = true):
+            Print("Trigger 3 Activated!")
+            Print("All Three Triggers Activated within Time Limits")
+        

@@ -1,0 +1,1052 @@
+
+GDebugLog<public> := module:
+
+    <#
+        Created by Gorosuke
+        Version: 1.1.0
+        
+        Don't rename these modules
+        モジュール名の変更はしないでください
+    #>
+
+    using { /Verse.org/Assets }
+    using { /Verse.org/Colors }
+    using { /Verse.org/Simulation }
+    using { /UnrealEngine.com/Temporary/SpatialMath }
+    using { /UnrealEngine.com/Temporary/UI }
+    using { /Fortnite.com/Characters }
+    using { /Fortnite.com/Devices }
+    using { /Fortnite.com/UI }
+
+    using { Categories }
+    using { Data }
+    using { Devices }
+    using { Internal }
+    using { Functions }
+    using { Widgets }
+    using { WidgetInternal }
+
+    Devices<public> := module:
+
+        debug_log_device<public> := class(creative_device):
+
+            @editable
+            DebugMode<private>:debug_mode = debug_mode.Development
+
+            @editable
+            ShowButton:button_device = button_device{}
+
+            @editable
+            MaxLog:?int = option{100}
+
+            var DebugLogWindow<private>:[player]debug_log_widget = map{}
+
+            OnBegin<override>()<suspends>:void=
+                set GetDebugData().DebugMode = DebugMode
+                set GetDebugData().MaxLog = MaxLog
+                if(DebugMode <> debug_mode.Release):
+                    ShowButton.InteractedWithEvent.Subscribe(OnInteractShow)
+
+            Show<public><final>(InPlayer:player):void=
+                if(not DebugLogWindow[InPlayer]):
+                    NewWindow := MakeDebugLogWidget(InPlayer)
+                    NewWindow.Show()
+                    if(set DebugLogWindow[InPlayer] = NewWindow):
+                        spawn{AwaitUIClose(NewWindow)}
+
+            Hide<public><final>(InPlayer:player):void=
+                if(Window := DebugLogWindow[InPlayer]):
+                    Window.Hide()
+                set DebugLogWindow = DebugLogWindow.RemoveKey(InPlayer)
+
+            ShowAll<public><final>():void=
+                for(PlayerElement : GetPlayspace().GetPlayers()):
+                    Show(PlayerElement)
+
+            HideAll<public><final>():void=
+                for(PlayerElement : GetPlayspace().GetPlayers()):
+                    Hide(PlayerElement)
+
+            RegisterWindow<public><final>(InWindow:debug_log_window):void=
+                return
+
+            AwaitUIClose<private>(InWidget:debug_log_widget)<suspends>:void=
+                InWidget.ClosedEvent.Await()
+                set DebugLogWindow = DebugLogWindow.RemoveKey(InWidget.Player)
+
+            OnInteractShow(Agent:agent):void=
+                if(Player := player[Agent]):
+                    Show(Player)
+
+    DeviceCommandInput<public> := module:
+
+        input_info<internal> := class<concrete>:
+            @editable
+            InputTrigger<public>:input_trigger_device = input_trigger_device{}
+
+            @editable
+            ApplyHoldTime<public>:range_float = range_float{}
+
+        debug_log_device_command_input<public> := class(debug_log_device):
+            @editable
+            ShowInput:[]input_info = array{}
+
+            var TryAgents<private>:[]agent = array{}
+
+            OnBegin<override>()<suspends>:void=
+                (super:)OnBegin()
+                AwaitFirstInput()
+
+            AwaitFirstInput<private><final>()<suspends>:void=
+                if(FirstInput := ShowInput[0]):
+                    loop:
+                        FirstInputAgent := FirstInput.InputTrigger.PressedEvent.Await()
+                        if(not TryAgents.Find[FirstInputAgent], Player := player[FirstInputAgent], GetDebugData().IsEnabledInputShow?):
+                            set TryAgents += array{FirstInputAgent}
+                            spawn{CheckInput(Player)}
+
+            CheckInput<private><final>(InPlayer:player)<suspends>:void=
+                defer:
+                    set TryAgents = TryAgents.RemoveAllElements(InPlayer)
+                for(InputElement : ShowInput):
+                    ReleasedInfo := AwaitTargetPlayerReleased(InPlayer, InputElement.InputTrigger)
+                    Sleep(0.0)
+                    if(not IsInRange[ReleasedInfo(1), InputElement.ApplyHoldTime]):
+                        return
+                Self.Show(InPlayer)
+
+            AwaitTargetPlayerReleased<private><final>(InPlayer:player, InInputTrigger:input_trigger_device)<suspends>:tuple(player, float)=
+                loop:
+                    ReleasedInfo := InInputTrigger.ReleasedEvent.Await()
+                    if(ReleasedInfo(0) = InPlayer):
+                        return (InPlayer, ReleasedInfo(1))
+
+    Categories<public> := module:
+        
+        Normal<public>:category = category:
+            Prefix := option{"Normal"}
+            NameID := "Normal"
+            Color := NamedColors.LightSkyBlue
+
+        Warning<public>:category = category:
+            Prefix := option{"Warning"}
+            NameID := "Warning"
+            Color := NamedColors.Yellow
+
+        Error<public>:category = category:
+            Prefix := option{"Error"}
+            NameID := "Error"
+            Color := NamedColors.Red
+
+        category<public> := class<computes>:
+            # {Prefix} | {debug_log_data.Message} | {Suffix}で表記される。
+            Prefix<public>:?string = false
+            Suffix<public>:?string = false
+            # カテゴリの参照名を指定する。同名にすると同じカテゴリとして扱われる。
+            NameID<public>:string
+            Color<public>:color = NamedColors.White
+            Icon<public>:?texture = false
+
+    Data<public> := module:
+        
+        debug_mode<public> := enum:
+            Development
+            Simulation
+            Release
+
+        MakeDebugLog<public><constructor>(InMessage:string, InCategory:category, ?InChannel:debug_mode=debug_mode.Development)<transacts> := debug_log:
+            Message := InMessage
+            Category := InCategory
+            Channel := InChannel
+            Date := GetSimulationElapsedTime()
+
+        MakeDebugLogAgent<public><constructor>(
+            InMessage:string, InCategory:category, InAgent:agent, ?InChannel:debug_mode=debug_mode.Development
+        )<transacts> := debug_log_agent:
+            MakeDebugLog<constructor>(InMessage, InCategory, ?InChannel:=InChannel)
+            Agent := InAgent
+
+        MakeDebugLogVector3<public><constructor>(
+            InMessage:string, InCategory:category, InVector3:vector3, ?InChannel:debug_mode=debug_mode.Development
+        )<transacts> := debug_log_vector3:
+            MakeDebugLog<constructor>(InMessage, InCategory, ?InChannel:=InChannel)
+            Vector3 := InVector3
+
+        debug_log<public> := class<computes><internal>:
+            Category<public>:category
+            Message<public>:string
+            Date<public>:float
+            Channel<public>:debug_mode
+
+        debug_log_agent<public> := class<internal>(debug_log):
+            Agent<public>:agent
+
+        debug_log_vector3<public> := class<internal>(debug_log):
+            Vector3<public>:vector3
+
+        ToString<public>(InData:debug_log)<computes><reads>:string=
+            Prefix := 
+                if(Value := InData.Category.Prefix?):
+                    "{Value} | "
+                else:
+                    ""
+            Suffix :=
+                if(Value := InData.Category.Suffix?):
+                    " | {Value}"
+                else:
+                    ""
+            "{Prefix}{InData.Message}{Suffix}"
+
+    Logger<public> := module:
+
+        NormalLog<public>(InMessage:string)<transacts>:void=
+            NewDebugLog := MakeDebugLog(InMessage, Categories.Normal)
+            PrintLog(NewDebugLog)
+
+        WarningLog<public>(InMessage:string)<transacts>:void=
+            NewDebugLog := MakeDebugLog(InMessage, Categories.Warning)
+            PrintLog(NewDebugLog)
+
+        ErrorLog<public>(InMessage:string)<transacts>:void=
+            NewDebugLog := MakeDebugLog(InMessage, Categories.Error)
+            PrintLog(NewDebugLog)
+
+        CategoryLog<public>(InMessage:string, InCategory:category)<transacts>:void=
+            NewDebugLog := MakeDebugLog(InMessage, InCategory)
+            PrintLog(NewDebugLog)
+
+        PrintLog<public>(InData:debug_log)<transacts>:void=
+            AddLog(InData)
+            if(IsDisplayable[InData.Channel]):
+                DebugMessage := "{InData}"
+                Print("{DebugMessage}", ?Color:=InData.Category.Color)
+
+        AddLog<public>(InData:debug_log)<transacts>:void=
+            set GetDebugData().DebugLogs += array{InData}
+            if:
+                MaxLength := GetDebugData().MaxLog?
+                GetDebugData().DebugLogs.Length > MaxLength
+                SlicedLogs := GetDebugData().DebugLogs.Slice[GetDebugData().DebugLogs.Length-MaxLength]
+                set GetDebugData().DebugLogs = SlicedLogs
+
+    Functions<public> := module:
+
+        GetAllLogs<public>()<transacts>:[]debug_log=
+            GetDebugData().DebugLogs
+
+        GetLogs<public>(InCategory:category)<transacts>:[]debug_log=
+            for(DataElemenet : GetDebugData().DebugLogs, DataElemenet.Category.NameID = InCategory.NameID):
+                DataElemenet
+
+        ClearLogs<public>()<transacts>:void=
+            set GetDebugData().DebugLogs = array{}
+
+        GetUsedCategories<public>()<transacts>:[]category=
+            var Result:[]category = array{}
+            for(DataElement : GetDebugData().DebugLogs):
+                if:
+                    not (
+                        for(ResultElement : Result, ResultElement.NameID = DataElement.Category.NameID):
+                            ResultElement
+                    )[0]
+                then:
+                    set Result += array{DataElement.Category}
+            Result
+
+        SetDebugMode<public>(InMode:debug_mode)<transacts>:void=
+            set GetDebugData().DebugMode = InMode
+
+    Widgets<public> := module:
+
+        MakeDebugLogWidget<public><constructor>(InPlayer:player, ?InWindows:[]debug_log_window=array{})<transacts> := debug_log_widget:
+            Player := InPlayer
+            CustomWindows := InWindows
+
+        debug_log_window<public> := class<abstract><unique>:
+
+            Title<public><localizes>:message="Debug Log Window"
+            TitleButton<public><final>:text_button_base = button_loud{}
+
+            var<private> MyCanvas<public>:canvas = canvas{}
+            var<private> Layers<public>:[]canvas = array{}
+            Order<public>:int = 0
+
+            Create<public>():canvas=
+                CreateLayers()
+                SetLayer(0)
+                NewCanvas := CreateCanvas()
+                set MyCanvas = NewCanvas
+                NewCanvas
+
+            CreateCanvas<private>():canvas=
+                canvas:
+                    Slots := 
+                        for(LayerElement : Layers):
+                            canvas_slot:
+                                Anchors := anchors:
+                                    Minimum := vector2{X := 0.0, Y := 0.0}
+                                    Maximum := vector2{X := 1.0, Y := 1.0}
+                                Widget := LayerElement
+
+            AddLayer<protected>(InLayer:canvas):void=
+                set Layers += array{InLayer}
+
+            SetLayer<public>(InIndex:int):void=
+                for(Index -> LayerElement : Layers):
+                    if(Index = InIndex):
+                        LayerElement.SetVisibility(widget_visibility.Visible)
+                    else:
+                        LayerElement.SetVisibility(widget_visibility.Collapsed)
+
+            CreateLayers<protected>():void
+
+            Update<public>():void=
+                return
+
+            SetEnabled<public>(IsEnabled:logic):void=
+                if(IsEnabled?):
+                    MyCanvas.SetVisibility(widget_visibility.Visible)
+                else:
+                    MyCanvas.SetVisibility(widget_visibility.Hidden)
+
+            AwaitEvents<public>()<suspends>:void=
+                Sleep(Inf)
+
+    WidgetLogHistory<public> := module:
+
+        MessageOpenButton<public><localizes>:message="Open"
+        MessageScrollUpButton<public><localizes>:message="↑"
+        MessageScrollDownButton<public><localizes>:message="↓"
+
+        # コンフィグウィンドウを作るまでの仮置き
+        MessageIsEnabledInputShowButton<public><localizes>:message="Input: Enabled"
+        MessageIsDisabledInputShowButton<public><localizes>:message="Input: Disabled"
+
+        card_sort_mode<internal> := enum:
+            Least
+            Oldest
+
+        ToString<internal>(InMode:card_sort_mode)<computes><reads>:string=
+            case(InMode):
+                card_sort_mode.Least=> "Least"
+                card_sort_mode.Oldest=> "Oldest"
+
+        ToSortMode<internal>:[int]card_sort_mode = map:
+            0 => card_sort_mode.Least
+            1 => card_sort_mode.Oldest
+
+        debug_log_card<internal> := class:
+            Background<public>:color_block
+            TextBackground<public>:color_block
+            IconOr<public>:color_block
+            Text<public>:text_button_base
+            TimeText<public>:text_block
+            TimeTextBackground<public>:color_block
+            OpenButton<public>:text_button_base
+
+            SetVisible<public>(IsVisible:logic):void=
+                if(IsVisible?):
+                    Background.SetVisibility(widget_visibility.Visible)
+                    TextBackground.SetVisibility(widget_visibility.Visible)
+                    IconOr.SetVisibility(widget_visibility.Visible)
+                    Text.SetVisibility(widget_visibility.Visible)
+                    OpenButton.SetVisibility(widget_visibility.Visible)
+                    TimeText.SetVisibility(widget_visibility.Visible)
+                    TimeTextBackground.SetVisibility(widget_visibility.Visible)
+                else:
+                    Background.SetVisibility(widget_visibility.Collapsed)
+                    TextBackground.SetVisibility(widget_visibility.Collapsed)
+                    IconOr.SetVisibility(widget_visibility.Collapsed)
+                    Text.SetVisibility(widget_visibility.Collapsed)
+                    OpenButton.SetVisibility(widget_visibility.Collapsed)
+                    TimeText.SetVisibility(widget_visibility.Collapsed)
+                    TimeTextBackground.SetVisibility(widget_visibility.Collapsed)
+
+        debug_log_detail<internal> := class:
+            Background<public>:color_block
+            Header<public>:color_block
+            CategoryTitle<public>:text_button_base
+            TrackedDate<public>:text_button_base
+            Message<public>:text_block
+            AgentName<public>:text_button_base
+            TeleportToButton<public>:text_button_base
+            CloseButton<public>:text_button_base
+
+            Update<public>(InLog:debug_log):void=
+                Header.SetColor(InLog.Category.Color)
+                CategoryTitle.SetText(StringToMessage("{InLog.Category.NameID}"))
+                TrackedDate.SetText(StringToMessage(ToMMSS(InLog.Date)))
+                Message.SetText(StringToMessage("{InLog.Message}"))
+                CategoryTitle.SetEnabled(false)
+                TrackedDate.SetEnabled(false)
+
+                if(AgentData := debug_log_agent[InLog]):
+                    AgentName.SetVisibility(widget_visibility.Visible)
+                    AgentName.SetText(AgentToMessage(AgentData.Agent))
+                else:
+                    AgentName.SetVisibility(widget_visibility.Collapsed)
+
+                if(Vector3Data := debug_log_vector3[InLog]):
+                    TeleportToButton.SetVisibility(widget_visibility.Visible)
+                    TeleportToButton.SetText(StringToMessage("{Vector3Data.Vector3}"))
+                else:
+                    TeleportToButton.SetVisibility(widget_visibility.Collapsed)
+
+        debug_log_window_history<public> := class(debug_log_window):
+            Title<override><localizes>:message="Log History"
+
+            var DebugLogCards<private>:[]debug_log_card = array{}
+            ScrollUpButton<private>:text_button_base = button_loud{DefaultText := MessageScrollUpButton}
+            ScrollDownButton<private>:text_button_base = button_loud{DefaultText := MessageScrollDownButton}
+            ScrollCurrentText<private>:text_block = text_block{DefaultTextColor := TextColor, DefaultJustification := text_justification.Center}
+
+            SortButton<private>:text_button_base = button_loud{}
+            FilteredCategoryButton<private>:text_button_base = button_loud{}
+            IsEnabledInputShowButton<private>:text_button_base = button_loud{}
+
+            DetailWindow<private>:debug_log_detail = debug_log_detail:
+                Background := color_block{DefaultColor := SubColor}
+                Header := color_block{DefaultColor := MainColor}
+                CategoryTitle := button_quiet{}
+                TrackedDate := button_quiet{}
+                Message := text_block{DefaultTextColor := TextColor, DefaultJustification := text_justification.Center}
+                AgentName := button_quiet{}
+                TeleportToButton := button_quiet{}
+                CloseButton := button_loud{DefaultText := MessageCloseButton}
+
+            var CurrentPage<private>:int = 0
+            var CurrentSortModeIndex<private>:int = 0
+            var CurrentFilteredCategoriesIndex<private>:int = -1
+            var CurrentOpenedIndex<private>:int = -1
+            var CurrentLastUpdatedLogs<private>:[]debug_log = array{}
+            CardLength<private>:int = 5
+
+            CreateLayers<override>():void=
+                AddLayer(CreateLayer0())
+                AddLayer(CreateLayer2())
+
+            CreateLayer0<private>():canvas=
+                var Slots:[]canvas_slot = array{}
+                set DebugLogCards = array{}
+
+                set Slots += array:
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.1, Y := 0.2}
+                            Maximum := vector2{X := 0.8, Y := 0.9}
+                        Widget := stack_box:
+                            Orientation := orientation.Vertical
+                            Slots := for(Value := 0..5):
+                                NewCard := CreateLogCard()
+                                set DebugLogCards += array{NewCard(1)}
+                                stack_box_slot:
+                                    HorizontalAlignment := horizontal_alignment.Fill
+                                    VerticalAlignment := vertical_alignment.Fill
+                                    Widget := NewCard(0)
+
+                set Slots += array:
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.05, Y := 0.4}
+                            Maximum := vector2{X := 0.1, Y := 0.45}
+                        Widget := ScrollUpButton
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.05, Y := 0.55}
+                            Maximum := vector2{X := 0.1, Y := 0.6}
+                        Widget := ScrollDownButton
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.05, Y := 0.5}
+                            Maximum := vector2{X := 0.1, Y := 0.5}
+                        Alignment := vector2{X := 0.5, Y := 0.5}
+                        Widget := ScrollCurrentText
+
+                set Slots += array:
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.99, Y := 0.5}
+                            Maximum := vector2{X := 0.99, Y := 0.5}
+                        Alignment := vector2{X := 1.0, Y := 0.5}
+                        Widget := stack_box:
+                            Orientation := orientation.Vertical
+                            Slots := array:
+                                stack_box_slot:
+                                    HorizontalAlignment := horizontal_alignment.Fill
+                                    VerticalAlignment := vertical_alignment.Fill
+                                    Padding := margin:
+                                        Left := 5.0
+                                        Right := 5.0
+                                        Top := 5.0
+                                        Bottom := 5.0
+                                    Widget := SortButton
+                                stack_box_slot:
+                                    HorizontalAlignment := horizontal_alignment.Fill
+                                    VerticalAlignment := vertical_alignment.Fill
+                                    Padding := margin:
+                                        Left := 5.0
+                                        Right := 5.0
+                                        Top := 5.0
+                                        Bottom := 5.0
+                                    Widget := FilteredCategoryButton
+                                stack_box_slot:
+                                    HorizontalAlignment := horizontal_alignment.Fill
+                                    VerticalAlignment := vertical_alignment.Fill
+                                    Padding := margin:
+                                        Left := 5.0
+                                        Right := 5.0
+                                        Top := 5.0
+                                        Bottom := 5.0
+                                    Widget := IsEnabledInputShowButton
+
+                canvas:
+                    Slots := Slots
+
+            CreateLayer2<private>():canvas=
+                var CanvasSlots:[]canvas_slot = array{}
+
+                set CanvasSlots += array:
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.1, Y := 0.2}
+                            Maximum := vector2{X := 0.8, Y := 0.8}
+                        Widget := overlay:
+                            Slots := array:
+                                overlay_slot:
+                                    HorizontalAlignment := horizontal_alignment.Fill
+                                    VerticalAlignment := vertical_alignment.Fill
+                                    Widget := DetailWindow.Background
+                                    
+                                overlay_slot:
+                                    HorizontalAlignment := horizontal_alignment.Fill
+                                    VerticalAlignment := vertical_alignment.Fill
+                                    Padding := margin:
+                                        Left := 5.0
+                                        Right := 5.0
+                                        Top := 5.0
+                                        Bottom := 5.0
+                                    Widget := stack_box:
+                                        Orientation := orientation.Vertical
+                                        Slots := array:
+                                            stack_box_slot:
+                                                HorizontalAlignment := horizontal_alignment.Fill
+                                                VerticalAlignment := vertical_alignment.Fill
+                                                Distribution := option{0.11}
+                                                Widget := DetailWindow.Header
+                                            stack_box_slot:
+                                                HorizontalAlignment := horizontal_alignment.Fill
+                                                VerticalAlignment := vertical_alignment.Fill
+                                                Distribution := option{0.89}
+                                                Padding := margin:
+                                                    Left := 25.0
+                                                    Right := 25.0
+                                                    Top := 25.0
+                                                    Bottom := 25.0
+                                                Widget := DetailWindow.Message
+                        
+                set CanvasSlots += array:
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.4, Y := 0.75}
+                            Maximum := vector2{X := 0.6, Y := 0.8}
+                        ZOrder := 255
+                        Widget := DetailWindow.CloseButton
+                set CanvasSlots += array:
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.11, Y := 0.7}
+                            Maximum := vector2{X := 0.9, Y := 0.7}
+                        Alignment := vector2{X := 0.5, Y := 1.0}
+                        ZOrder := 255
+                        Widget := stack_box:
+                            Orientation := orientation.Horizontal
+                            Slots := array:
+                                stack_box_slot:
+                                    HorizontalAlignment := horizontal_alignment.Left
+                                    VerticalAlignment := vertical_alignment.Fill
+                                    Widget := DetailWindow.AgentName
+                                stack_box_slot:
+                                    HorizontalAlignment := horizontal_alignment.Left
+                                    VerticalAlignment := vertical_alignment.Fill
+                                    Widget := DetailWindow.TeleportToButton
+
+                set CanvasSlots += array:
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.11, Y := 0.21}
+                            Maximum := vector2{X := 0.11, Y := 0.21}
+                        Alignment := vector2{X := 0.0, Y := 0.0}
+                        ZOrder := 255
+                        Widget := stack_box:
+                            Orientation := orientation.Horizontal
+                            Slots := array:
+                                stack_box_slot:
+                                    HorizontalAlignment := horizontal_alignment.Fill
+                                    VerticalAlignment := vertical_alignment.Fill
+                                    Widget := DetailWindow.CategoryTitle
+                                stack_box_slot:
+                                    HorizontalAlignment := horizontal_alignment.Fill
+                                    VerticalAlignment := vertical_alignment.Fill
+                                    Widget := DetailWindow.TrackedDate
+
+                canvas:
+                    Slots := CanvasSlots
+
+            Update<override>():void=
+                set CurrentLastUpdatedLogs = GetResultLogs()
+                CardIndex := GetCardIndex()
+                for(Index -> CardElement : DebugLogCards):
+                    if(LogIndex := CardIndex[Index], LogData := CurrentLastUpdatedLogs[LogIndex]):
+                        SetCard(Index, LogData)
+                    else:
+                        ClearCard(Index)
+
+                if(CurrentPage = 0):
+                    ScrollUpButton.SetEnabled(false)
+                else:
+                    ScrollUpButton.SetEnabled(true)
+                if(CurrentPage = GetCardMax() - 1):
+                    ScrollDownButton.SetEnabled(false)
+                else:
+                    ScrollDownButton.SetEnabled(true)
+                ScrollCurrentText.SetText(StringToMessage("{CurrentPage + 1}/{GetCardMax()}"))
+                if(CurrentSortMode := ToSortMode[CurrentSortModeIndex]):
+                    SortButton.SetText(StringToMessage(ToString(CurrentSortMode)))
+
+                if(FilteredCategory := GetUsedCategories()[CurrentFilteredCategoriesIndex]):
+                    FilteredCategoryButton.SetText(StringToMessage(FilteredCategory.NameID))
+                else:
+                    FilteredCategoryButton.SetText(StringToMessage("All"))
+
+                if(GetDebugData().IsEnabledInputShow?):
+                    IsEnabledInputShowButton.SetText(MessageIsEnabledInputShowButton)
+                else:
+                    IsEnabledInputShowButton.SetText(MessageIsDisabledInputShowButton)
+
+            SetCard<private>(Index:int, InData:debug_log):void=
+                if(TargetCard := DebugLogCards[Index]):
+                    TargetCard.SetVisible(true)
+                    CardText := InData.Message
+                    TargetCard.Text.SetText(StringToMessage(CardText))
+                    TargetCard.Background.SetColor(InData.Category.Color)
+                    TargetCard.TimeText.SetText(StringToMessage(ToMMSS(InData.Date)))
+
+            ClearCard<private>(Index:int):void=
+                if(TargetCard := DebugLogCards[Index]):
+                    TargetCard.SetVisible(false)
+
+            AwaitEvents<override>()<suspends>:void=
+                sync:
+                    loop:
+                        ScrollUpButton.OnClick().Await()
+                        set CurrentPage = IndexScroll(CurrentPage - 1, GetCardMax())
+                        Update()
+                    loop:
+                        ScrollDownButton.OnClick().Await()
+                        set CurrentPage = IndexScroll(CurrentPage + 1, GetCardMax())
+                        Update()
+                    loop:
+                        SortButton.OnClick().Await()
+                        set CurrentSortModeIndex = IndexScroll(CurrentSortModeIndex + 1, ToSortMode.Length)
+                        Update()
+                    loop:
+                        FilteredCategoryButton.OnClick().Await()
+                        set CurrentFilteredCategoriesIndex = IndexScroll(CurrentFilteredCategoriesIndex + 1, -1, GetUsedCategories().Length)
+                        Update()
+                    loop:
+                        IsEnabledInputShowButton.OnClick().Await()
+                        set GetDebugData().IsEnabledInputShow = logic{not GetDebugData().IsEnabledInputShow?}
+                        Update()
+                    loop:
+                        DetailWindow.CloseButton.OnClick().Await()
+                        SetLayer(0)
+                    loop:
+                        Cards := for(Index -> CardElement : DebugLogCards):
+                            (CardElement.OpenButton, Index)
+                        ButtonIndex := ArrayRace(Cards, WidgetIndexButtonRace)
+                        set CurrentOpenedIndex = ButtonIndex
+                        CardIndex := GetCardIndex()
+                        if(TargetData := CurrentLastUpdatedLogs[CardIndex[ButtonIndex]]):
+                            DetailWindow.Update(TargetData)
+                            SetLayer(1)
+                    loop:
+                        WidgetMessage := DetailWindow.TeleportToButton.OnClick().Await()
+                        CardIndex := GetCardIndex()
+                        if:
+                            TargetData := CurrentLastUpdatedLogs[CardIndex[CurrentOpenedIndex]]
+                            Vector3Data := debug_log_vector3[TargetData]
+                            FortChar := WidgetMessage.Player.GetFortCharacter[]
+                            FortChar.TeleportTo[Vector3Data.Vector3, FortChar.GetTransform().Rotation]
+                    
+                        
+
+            GetCardIndex():[]int=
+                StartIndex := CurrentPage * CardLength
+                EndIndex := StartIndex + CardLength
+                for(Index := StartIndex..EndIndex):
+                    Index
+
+            GetCardMax()<transacts>:int=
+                if(Result := Ceil(CurrentLastUpdatedLogs.Length / CardLength)):
+                    Result
+                else:
+                    1
+
+            GetResultLogs<internal>()<transacts>:[]debug_log=
+                UsedCategories := GetUsedCategories()
+                CurrentResult := if(FilteredCategory := UsedCategories[CurrentFilteredCategoriesIndex]):
+                    GetLogs(FilteredCategory)
+                else:
+                    GetAllLogs()
+                CurrentSortMode := if(Result := ToSortMode[CurrentSortModeIndex]) then Result else card_sort_mode.Least
+                case(CurrentSortMode):
+                    card_sort_mode.Least=>
+                        CurrentResult.Invert()
+                    card_sort_mode.Oldest=>
+                        CurrentResult
+
+            CreateLogCard<private>():tuple(overlay, debug_log_card)=
+                BackgroundColorBlock := color_block{DefaultColor := MainColor}
+                TextBackgroundColorBlock := color_block{DefaultColor := SubColor}
+                IconOr := color_block{DefaultColor := MainColor, DefaultDesiredSize := vector2{X := 32.0, Y := 32.0}}
+                TextBlock := button_quiet{}
+                TimeTextBlock := text_block{DefaultTextColor := TextColor}
+                TimeTextBackgroundBlock := color_block{DefaultColor := SubColor, DefaultDesiredSize := vector2{X := 96.0, Y := 64.0}}
+                OpenButton := button_loud{DefaultText := MessageOpenButton}
+
+                Elements := debug_log_card:
+                    Background := BackgroundColorBlock
+                    TextBackground := TextBackgroundColorBlock
+                    IconOr := IconOr
+                    Text := TextBlock
+                    TimeText := TimeTextBlock
+                    TimeTextBackground := TimeTextBackgroundBlock
+                    OpenButton := OpenButton
+
+                Card := overlay:
+                    Slots := array:
+                        overlay_slot:
+                            HorizontalAlignment := horizontal_alignment.Fill
+                            VerticalAlignment := vertical_alignment.Fill
+                            Widget := BackgroundColorBlock
+                        overlay_slot:
+                            HorizontalAlignment := horizontal_alignment.Fill
+                            VerticalAlignment := vertical_alignment.Fill
+                            Padding := margin:
+                                Left := 5.0
+                                Right := 5.0
+                                Top := 5.0
+                                Bottom := 5.0
+                            Widget := stack_box:
+                                Orientation := orientation.Horizontal
+                                Slots := array:
+                                    stack_box_slot:
+                                        HorizontalAlignment := horizontal_alignment.Left
+                                        VerticalAlignment := vertical_alignment.Center
+                                        Padding := margin:
+                                            Left := 5.0
+                                            Right := 5.0
+                                            Top := 5.0
+                                            Bottom := 5.0
+                                        Widget := IconOr
+                                    stack_box_slot:
+                                        HorizontalAlignment := horizontal_alignment.Fill
+                                        VerticalAlignment := vertical_alignment.Fill
+                                        Distribution := option{1.0}
+                                        Widget := overlay:
+                                            Slots := array:
+                                                overlay_slot:
+                                                    HorizontalAlignment := horizontal_alignment.Fill
+                                                    VerticalAlignment := vertical_alignment.Fill
+                                                    Widget := TextBackgroundColorBlock
+                                                overlay_slot:
+                                                    HorizontalAlignment := horizontal_alignment.Left
+                                                    VerticalAlignment := vertical_alignment.Center
+                                                    Padding := margin:
+                                                        Left := 5.0
+                                                        Right := 5.0
+                                                        Top := 5.0
+                                                        Bottom := 5.0
+                                                    Widget := TextBlock
+                                    stack_box_slot:
+                                        HorizontalAlignment := horizontal_alignment.Fill
+                                        VerticalAlignment := vertical_alignment.Fill
+                                        Padding := margin:
+                                            Left := 5.0
+                                            Right := 5.0
+                                        Widget := overlay:
+                                            Slots := array:
+                                                overlay_slot:
+                                                    HorizontalAlignment := horizontal_alignment.Fill
+                                                    VerticalAlignment := vertical_alignment.Fill
+                                                    Widget := TimeTextBackgroundBlock
+                                                overlay_slot:
+                                                    HorizontalAlignment := horizontal_alignment.Center
+                                                    VerticalAlignment := vertical_alignment.Center
+                                                    Padding := margin:
+                                                        Left := 5.0
+                                                        Right := 5.0
+                                                        Top := 5.0
+                                                        Bottom := 5.0
+                                                    Widget := TimeTextBlock
+                                    stack_box_slot:
+                                        HorizontalAlignment := horizontal_alignment.Right
+                                        VerticalAlignment := vertical_alignment.Center
+                                        Padding := margin:
+                                            Left := 5.0
+                                            Right := 5.0
+                                            Top := 5.0
+                                            Bottom := 5.0
+                                        Widget := OpenButton
+                        
+                (Card, Elements)
+
+    Internal<internal> := module:
+
+        # 全体を構成するカラー（背景など）
+        MainColor<public>:color = NamedColors.DarkGray
+        # 装飾用のカラー（文字背景など）
+        SubColor<public>:color = NamedColors.White
+        # テキストのカラー
+        TextColor<public>:color = NamedColors.Black
+
+        TextMessage<public><localizes>:message="テキスト表示の確認用です。テキスト表示の確認用です。テキスト表示の確認用です。テキスト表示の確認用です。テキスト表示の確認用です。テキスト表示の確認用です。"
+
+        var DebugData<public>:weak_map(session, debug_data) = map{}
+
+        GetDebugData<public>()<transacts>:debug_data=
+            if(Value := DebugData[GetSession()]):
+                Value
+            else if(Value := set DebugData[GetSession()] = debug_data{}):
+                Value
+            else:
+                debug_data{}
+
+        debug_data<public> := class<final>:
+
+            var DebugMode<public>:debug_mode = debug_mode.Development
+            var DebugLogs<public>:[]debug_log = array{}
+            var MaxLog<public>:?int = option{50}
+
+            var IsEnabledInputShow<public>:logic = true
+
+        IsDisplayable<public>(InChannel:debug_mode)<decides><transacts>:void=
+            SessionDebugMode := GetDebugData().DebugMode
+            case(InChannel):
+                debug_mode.Development=>
+                    SessionDebugMode = debug_mode.Development
+                debug_mode.Simulation=>
+                    SessionDebugMode = debug_mode.Development or
+                    SessionDebugMode = debug_mode.Simulation
+                debug_mode.Release=>
+                    SessionDebugMode = debug_mode.Development or
+                    SessionDebugMode = debug_mode.Simulation or
+                    SessionDebugMode = debug_mode.Release
+
+        (Maps:[key]value).RemoveKey<public>(InKey:key where key:subtype(comparable), value:type):[key]value=
+            var ResultMaps:[key]value = map{}
+            for(Key -> Value : Maps, Key <> InKey):
+                set ResultMaps = ConcatenateMaps(ResultMaps, map{Key => Value})
+            ResultMaps
+
+        StringToMessage<public><localizes>(InText:string):message="{InText}"
+        AgentToMessage<public><localizes>(InAgent:agent):message="{InAgent}"
+
+        # Epic Games / Official Snippet
+        ArrayRace<public>(Array:[]t, Function(Element:t)<suspends>:u where t:type, u:type)<suspends>:u=
+            if:
+                Array.Length > 1
+                Mid := Floor(Array.Length / 2)
+                LeftArray := Array.Slice[0, Mid]
+                RightArray := Array.Slice[Mid]
+            then:
+                race:
+                    ArrayRace(LeftArray, Function)
+                    ArrayRace(RightArray, Function)
+            else if:
+                First := Array[0]
+            then:
+                Function(First)
+            else:
+                Sleep(Inf)
+                Err()
+
+        WidgetEventsRace<public>(Func:type{_()<suspends>:void})<suspends>:void=
+            Func()
+
+        WidgetIndexButtonRace<public>(InButton:tuple(text_button_base, int))<suspends>:int=
+            InButton(0).OnClick().Await()
+            InButton(1)
+
+        # By Gorosuke
+        IndexScroll<public>(InIndex:int, InMax:int):int=
+            if(InIndex < 0):
+                InMax - 1
+            else if(InIndex >= InMax):
+                0
+            else:
+                InIndex
+
+        IndexScroll<public>(InIndex:int, InMin:int, InMax:int):int=
+            if(InIndex < InMin):
+                InMax - 1
+            else if(InIndex >= InMax):
+                InMin
+            else:
+                InIndex
+
+        (Arrays:[]t where t:type).Invert<public>()<transacts>:[]t=
+            for(Index := 0..Arrays.Length-1, InvertedIndex := Arrays.Length-1-Index, Element := Arrays[InvertedIndex]):
+                Element
+
+        ToMMSS<public>(Time:float)<reads><computes>:string=
+            Minutes := 
+                if(Result := Floor[Time / 60.0]):
+                    if(Result < 10):
+                        "0{Result}"
+                    else:
+                        "{Result}"
+                else:
+                    "00"
+            Seconds :=
+                if(Result := Mod[Int[Time], 60]):
+                    if(Result < 10):
+                        "0{Result}"
+                    else:
+                        "{Result}"
+                else:
+                    "00"
+            "{Minutes}:{Seconds}"
+
+        range_float<public> := class<concrete>:
+            @editable
+            Minimum<public>:float = 0.0
+
+            @editable
+            Maximum<public>:float = 1.0
+
+        IsInRange<public>(InValue:float, InRange:range_float)<decides><transacts>:void=
+            InRange.Minimum <= InValue and InValue <= InRange.Maximum
+
+    WidgetInternal<internal> := module:
+
+        using { WidgetLogHistory }
+
+        MessageCloseButton<public><localizes>:message="Close"
+        
+        debug_log_widget<public> := class<final>:
+
+            block:
+                Init()
+
+            Player<public>:player
+
+            CloseButton<private>:text_button_base = button_loud{DefaultText := MessageCloseButton}
+
+            var<private> Windows<public>:[]debug_log_window = array{}
+            CustomWindows<public>:[]debug_log_window
+            var<private> CurrentCanvas<private>:?canvas = false
+            var<private> WindowEvents<private>:[]type{_()<suspends>:void} = array{}
+
+            ClosedEvent<public>:event(debug_log_widget) = event(debug_log_widget){}
+
+            Init<protected>()<transacts>:void=
+                RegisterWindow(debug_log_window_history{})
+                set Windows += CustomWindows
+
+            Show<public><final>():void=
+                if(PlayerUI := GetPlayerUI[Player], not CurrentCanvas?):
+                    NewCanvas := CreateCanvas()
+                    PlayerUI.AddWidget(NewCanvas, player_ui_slot{InputMode := ui_input_mode.All})
+                    SetWindow(0)
+                    set CurrentCanvas = option{NewCanvas}
+                    spawn{AwaitEvents()}
+
+            Hide<public><final>():void=
+                if(PlayerUI := GetPlayerUI[Player], TargetCanvas := CurrentCanvas?):
+                    PlayerUI.RemoveWidget(TargetCanvas)
+                    set CurrentCanvas = false
+                    ClosedEvent.Signal(Self)
+
+            CreateCanvas<protected>():canvas=
+                var CanvasSlots:[]canvas_slot = array{}
+                set WindowEvents = array{}
+
+                for(WindowElement : Windows):
+                    set WindowEvents += array{WindowElement.AwaitEvents}
+                    set CanvasSlots += array:
+                        canvas_slot:
+                            Anchors := anchors:
+                                Minimum := vector2{X := 0.0, Y := 0.0}
+                                Maximum := vector2{X := 1.0, Y := 1.0}
+                            Widget := WindowElement.Create()
+
+                set CanvasSlots += array:
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.1, Y := 0.9}
+                            Maximum := vector2{X := 0.9, Y := 0.95}
+                        ZOrder := 512
+                        Widget := CloseButton
+
+                set CanvasSlots += array:
+                    canvas_slot:
+                        Anchors := anchors:
+                            Minimum := vector2{X := 0.5, Y := 0.05}
+                            Maximum := vector2{X := 0.5, Y := 0.05}
+                        Alignment := vector2{X := 0.5, Y := 0.0}
+                        Widget := CreateTab()
+
+                canvas:
+                    Slots := CanvasSlots
+
+            CreateTab<protected>():stack_box=
+                stack_box:
+                    Orientation := orientation.Horizontal
+                    Slots := for(WindowElement : Windows):
+                        spawn{AwaitClickTab(WindowElement)}
+                        WindowElement.TitleButton.SetText(WindowElement.Title)
+                        stack_box_slot:
+                            HorizontalAlignment := horizontal_alignment.Fill
+                            VerticalAlignment := vertical_alignment.Fill
+                            Padding := margin:
+                                Left := 5.0
+                                Right := 5.0
+                                Top := 5.0
+                                Bottom := 5.0
+                            Widget := WindowElement.TitleButton
+                        
+            RegisterWindow<public>(InWindow:debug_log_window)<transacts>:void=
+                set Windows += array{InWindow}
+
+            SetWindow<public>(InIndex:int):void=
+                TargetIndex := Clamp(InIndex, 0, Windows.Length-1)
+                for(Index -> WindowElement : Windows):
+                    if(Index = TargetIndex):
+                        WindowElement.SetEnabled(true)
+                        WindowElement.Update()
+                    else:
+                        WindowElement.SetEnabled(false)
+
+            AwaitClickTab<public>(InWindow:debug_log_window)<suspends>:void=
+                race:
+                    ClosedEvent.Await()
+                    loop:
+                        InWindow.TitleButton.OnClick().Await()
+                        if(TargetIndex := Windows.Find[InWindow]):
+                            InWindow.Update()
+                            SetWindow(TargetIndex)
+
+            AwaitEvents<private>()<suspends>:void=
+                race:
+                    ClosedEvent.Await()
+                    ArrayRace(WindowEvents, WidgetEventsRace)
+                    loop:
+                        CloseButton.OnClick().Await()
+                        Hide()
+                    loop:
+                        if(FortChar := Player.GetFortCharacter[]):
+                            FortChar.EliminatedEvent().Await()
+                            Hide()
+                        else:
+                            Hide()

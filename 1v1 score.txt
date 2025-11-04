@@ -1,0 +1,27 @@
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Playspaces }
+using { /Verse.org/Simulation }
+
+scoreresetoneone := class(creative_device):
+
+     @editable
+    ResetButton : button_device = button_device{}
+ 
+    @editable
+    ScoreManager : score_manager_device = score_manager_device{}
+ 
+    OnBegin<override>()<suspends>:void=
+        ResetButton.InteractedWithEvent.Subscribe(OnButtonPressed)
+        GetPlayspace().PlayerAddedEvent().Subscribe(OnPlayerJoined)
+ 
+    OnButtonPressed(Agent:agent):void=
+        ResetAllScores()
+ 
+    OnPlayerJoined(Player:player):void=
+        ResetAllScores()
+ 
+    ResetAllScores():void=
+        Players := GetPlayspace().GetPlayers()
+        for (Player : Players):
+            ScoreManager.SetScoreAward(0)
+            ScoreManager.Activate(Player)

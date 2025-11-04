@@ -1,0 +1,43 @@
+    using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+ 
+realtime_count := class(creative_device):
+ 
+    @editable
+    Billboard : billboard_device = billboard_device{}
+    @editable
+    Trigger : trigger_device = trigger_device{}
+    @editable
+    TargetEpoch : float = 1759462800.0 
+ 
+    var AlreadyTriggered : logic = false
+ 
+    StringToMessage<localizes>(InString : string) : message = "{InString}"
+ 
+    OnBegin<override>()<suspends> : void =
+        spawn { CountdownLoop() }
+ 
+    CountdownLoop()<suspends>: void =
+        loop:
+            if (AlreadyTriggered = false):
+                CurrentEpoch := GetSecondsSinceEpoch()
+                RemainingSeconds := TargetEpoch - CurrentEpoch
+ 
+                Print("CurrentEpoch: {CurrentEpoch}, TargetEpoch: {TargetEpoch}, RemainingSeconds: {RemainingSeconds}")
+ 
+                if (RemainingSeconds <= 0.0):
+                    set AlreadyTriggered = true
+                    Trigger.Trigger()
+                    Billboard.SetText(StringToMessage("Event started!"))
+                    Print("Scheduled trigger fired at target time!")
+                    break
+                else:
+                    Days := Floor[RemainingSeconds / 86400.0] or 0
+                    Hours := Floor[(RemainingSeconds - (Days * 86400.0)) / 3600.0] or 0
+                    Minutes := Floor[(RemainingSeconds - (Days * 86400.0) - (Hours * 3600.0)) / 60.0] or 0
+                    Seconds := Floor[RemainingSeconds - (Days * 86400.0) - (Hours * 3600.0) - (Minutes * 60.0)] or 0
+                    CountdownText := "{Days}d {Hours}h {Minutes}m {Seconds}s"
+                    Billboard.SetText(StringToMessage("{CountdownText}"))
+ 
+            Sleep(1.0)

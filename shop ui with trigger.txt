@@ -1,0 +1,47 @@
+    using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+ 
+shop_item_config := class<concrete><final>:
+    @editable
+    ButtonIndex : int = 0
+    @editable
+    Trigger : trigger_device = trigger_device{}
+    @editable
+    ConditionalButton : conditional_button_device = conditional_button_device{}
+ 
+shop_device := class(creative_device):
+    @editable
+    PopupDialog : popup_dialog_device = popup_dialog_device{}
+    @editable
+    SuccessHUD : hud_message_device = hud_message_device{}
+    @editable
+    FailHUD : hud_message_device = hud_message_device{}
+    @editable
+    ShopItems : []shop_item_config = array{}
+ 
+    StringToMessage<localizes>(InString : string) : message = "{InString}"
+ 
+    OnBegin<override>()<suspends>:void =
+        PopupDialog.RespondingButtonEvent.Subscribe(OnButtonPressed)
+        for (ItemConfig : ShopItems):
+            ItemConfig.ConditionalButton.ActivatedEvent.Subscribe(
+                handler_shop_activated{Device := Self, Config := ItemConfig}.OnActivated
+            )
+            ItemConfig.ConditionalButton.NotEnoughItemsEvent.Subscribe(OnConditionalButtonFailed)
+ 
+    OnButtonPressed(Agent:agent, ButtonIndex:int):void =
+        for (ItemConfig : ShopItems):
+            if (ButtonIndex = ItemConfig.ButtonIndex):
+                ItemConfig.ConditionalButton.Activate(Agent)
+ 
+    OnConditionalButtonFailed(Agent:agent):void =
+        FailHUD.Show(Agent, StringToMessage("Not enough gold!"))
+ 
+handler_shop_activated := class:
+    Device : shop_device
+    Config : shop_item_config
+ 
+    OnActivated(Agent:agent):void =
+        Config.Trigger.Trigger(Agent)
+        Device.SuccessHUD.Show(Agent, Device.StringToMessage("Purchase successful!"))

@@ -1,0 +1,49 @@
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Game }
+using { /Fortnite.com/Characters }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+ 
+EndGame_Animation_Screen := class(creative_device):
+ 
+    @editable
+    CinematicPlayTime : float = 5.0
+    @editable
+    EndGameDevice : end_game_device = end_game_device{}
+    @editable
+    PropTP : creative_prop = creative_prop{}
+    @editable
+    CameraCinematic : cinematic_sequence_device = cinematic_sequence_device{}
+ 
+    var PlayerCounter : int = 0
+ 
+    OnBegin<override>()<suspends>:void=
+        set PlayerCounter = GetPlayspace().GetPlayers().Length
+        for (Player : GetPlayspace().GetPlayers()):
+            OnPlayerJoined(Player)
+        GetPlayspace().PlayerAddedEvent().Subscribe(OnPlayerJoined)
+ 
+    OnPlayerJoined(Player:player):void=
+        if (FC := Player.GetFortCharacter[]):
+            FC.EliminatedEvent().Subscribe(OnEliminated)
+ 
+    OnEliminated(ElimResult:elimination_result):void=
+        spawn{AsyncOnEliminated(ElimResult)}
+ 
+    AsyncOnEliminated(ElimResult:elimination_result)<suspends>:void=
+        set PlayerCounter -= 1
+        if (ElimResult.EliminatingCharacter = ElimResult.EliminatedCharacter):
+            Print("Self-elimination detected")
+        if (PlayerCounter = 1):
+            PropTransform := PropTP.GetTransform()
+            if (FC := ElimResult.EliminatingCharacter?, Agent := FC.GetAgent[]):
+                if (FC.TeleportTo[PropTransform.Translation, PropTransform.Rotation]):
+                    Sleep(0.3)
+                    FC.PutInStasis(stasis_args{})
+                CameraCinematic.Play()
+                Sleep(CinematicPlayTime)
+                EndGameDevice.Activate(Agent)
+        else if (PlayerCounter < 1):
+            Sleep(0.5)
+            if (Agent := GetPlayspace().GetPlayers()[0]):
+                EndGameDevice.Activate(Agent)

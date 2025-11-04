@@ -1,0 +1,186 @@
+using { /Verse.org/Simulation }
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Game }
+using { /Fortnite.com/Characters }
+ 
+<# IMPORTANT | Please read:
+    - add as many health/shield configurations as you want
+    - make sure to disable "Throttle Class Changes" in the class selector devices
+    - if you selected any class selectors (they are not needed)
+ 
+    - Script created by Hafemi
+#>
+ 
+health_slider_manager := class(creative_device):
+ 
+    @editable Configurations: []health_configuration = array{}
+    @editable OverShieldSwitch: switch_device = switch_device{}
+    @editable OnlyHeadshotSwitch: switch_device = switch_device{}
+    @editable OverShieldClass: class_and_team_selector_device = class_and_team_selector_device{}
+    @editable DefaultClass:  class_and_team_selector_device = class_and_team_selector_device{}
+    @editable HealUpOnElim: logic = true
+ 
+    var CurrentHealth: float = 100.0
+    var CurrentShield: float = 100.0
+ 
+    var MaybeActiveClass: ?class_and_team_selector_device = false
+    var IsOnlyHeadshot: logic = false
+ 
+    OnBegin<override>()<suspends>:void=
+        for (Conf: Configurations):
+            if (Trigger := Conf.Trigger?, Button := Conf.Button?):
+                spawn. AwaitTriggerOrButton(Conf, Trigger, Button)
+            else if (Trigger := Conf.Trigger?):
+                spawn. AwaitTrigger(Conf, Trigger)
+            else if (Button := Conf.Button?):
+                spawn. AwaitButton(Conf, Button)
+ 
+        for (Player: GetPlayspace().GetPlayers()):
+            OnPlayerAdded(Player)
+ 
+        spawn. AwaitPlayerAdded()
+        spawn. AwaitOverShieldSwitched()
+        spawn. AwaitOnlyHeadshotSwitched()
+ 
+        set MaybeActiveClass = option{DefaultClass}
+ 
+    OnPlayerDamaged(DR: damage_result):void=
+        if (IsOnlyHeadshot?, Target := fort_character[DR.Target]):
+            spawn. HandlePlayerDamaged(Target)
+ 
+    HandlePlayerDamaged(Target: fort_character)<suspends>:void=
+        Sleep(0.0)
+        MaxShield := Target.GetMaxShield()
+        MaxHealth := Target.GetMaxHealth()
+        Target.SetShield(MaxShield)
+        Target.SetHealth(MaxHealth)
+ 
+    AwaitPlayerAdded()<suspends>:void=
+        loop:
+            Inst := GetPlayspace().PlayerAddedEvent().Await()
+            OnPlayerAdded(Inst)
+ 
+    OnPlayerAdded(Agent: agent):void=
+        spawn. SetPlayerToCurrentStats(Agent)
+ 
+        if (FC := Agent.GetFortCharacter[]):
+            spawn. AwaitEliminated(FC, Agent)
+            FC.DamagedEvent().Subscribe(OnPlayerDamaged)
+            FC.DamagedShieldEvent().Subscribe(OnPlayerDamaged)
+ 
+    AwaitEliminated(FC: fort_character, Agent: agent)<suspends>:void=
+        loop:
+            FC.EliminatedEvent().Await()
+            MaybeHealUpEveryone(Agent)
+            AwaitPlayerAlive(FC)
+            
+            spawn. SetPlayerToCurrentStats(Agent)
+
+    MaybeHealUpEveryone(Agent: agent):void=
+        if (HealUpOnElim?):
+            for (Player: GetPlayspace().GetPlayers(), Player <> Agent):
+                spawn. SetPlayerToCurrentStats(Player)
+ 
+    AwaitPlayerAlive(FC: fort_character)<suspends>:void=
+        loop:
+            Sleep(0.1)
+            if (FC.IsActive[]):
+                break
+ 
+    AwaitOverShieldSwitched()<suspends>:void=
+        loop:
+            race:
+                OverShieldSwitch.TurnedOnEvent.Await()
+                OverShieldSwitch.TurnedOffEvent.Await()
+ 
+            Sleep(0.0)
+            if (OverShieldSwitch.GetCurrentState[]):
+                SetNewClass(OverShieldClass)
+            else:
+                SetNewClass(DefaultClass)
+ 
+    AwaitOnlyHeadshotSwitched()<suspends>:void=
+        loop:
+            race:
+                OnlyHeadshotSwitch.TurnedOnEvent.Await()
+                OnlyHeadshotSwitch.TurnedOffEvent.Await()
+ 
+            Sleep(0.0)
+            if (OnlyHeadshotSwitch.GetCurrentState[]):
+                set IsOnlyHeadshot = true
+            else:
+                set IsOnlyHeadshot = false
+ 
+    SetNewClass(ClassSel: class_and_team_selector_device):void=
+        set MaybeActiveClass = option{ClassSel}
+        for (Player: GetPlayspace().GetPlayers()):
+            spawn. SetPlayerToCurrentStats(Player)
+ 
+    AwaitTriggerOrButton(
+        Conf: health_configuration, 
+        Trigger: trigger_device, 
+        Button: button_device
+    )<suspends>:void=
+        loop:
+            race:
+                Button.InteractedWithEvent.Await()
+                Trigger.TriggeredEvent.Await()
+ 
+            HandleResponse(Conf)
+ 
+    AwaitTrigger(Conf: health_configuration, Trigger: trigger_device)<suspends>:void=
+        loop:
+            Trigger.TriggeredEvent.Await()
+            HandleResponse(Conf)
+ 
+    AwaitButton(Conf: health_configuration, Button: button_device)<suspends>:void=
+        loop:
+            Button.InteractedWithEvent.Await()
+            HandleResponse(Conf)
+ 
+    HandleResponse(Conf: health_configuration):void=
+        case (Conf.Type):
+            health_type.Health => UpdateMaxHealth(Conf.Amount, Conf.Operation)
+            health_type.Shield => UpdateMaxShield(Conf.Amount, Conf.Operation)
+            health_type.Both =>
+                UpdateMaxHealth(Conf.Amount, Conf.Operation)
+                UpdateMaxShield(Conf.Amount, Conf.Operation)
+ 
+        for (Player: GetPlayspace().GetPlayers()):
+            spawn. SetPlayerToCurrentStats(Player)
+ 
+    UpdateMaxHealth(Amount: float, Operation: health_operation):void=
+        set CurrentHealth = case (Operation):
+            health_operation.Add => CurrentHealth + Amount
+            health_operation.Subtract => CurrentHealth - Amount
+            health_operation.Set => Amount
+ 
+    UpdateMaxShield(Amount: float, Operation: health_operation):void=
+        set CurrentShield = case (Operation):
+            health_operation.Add => CurrentShield + Amount
+            health_operation.Subtract => CurrentShield - Amount
+            health_operation.Set => Amount
+ 
+    SetPlayerToCurrentStats(Agent: agent)<suspends>:void=
+        Sleep(0.0)
+ 
+        if (FC := Agent.GetFortCharacter[]):
+            if (ClassSel := MaybeActiveClass?):
+                ClassSel.ChangeClass(Agent)
+ 
+            FC.SetMaxHealth(CurrentHealth)
+            FC.SetMaxShield(CurrentShield)
+ 
+health_configuration := class<concrete>:
+    @editable Operation: health_operation = health_operation.Add
+    @editable Type: health_type = health_type.Health
+    @editable Amount: float = 0.0
+ 
+    @editable Trigger: ?trigger_device = false
+    @editable Button: ?button_device = false
+ 
+health_operation := enum:
+    Add, Subtract, Set
+ 
+health_type := enum:
+    Health, Shield, Both

@@ -1,0 +1,44 @@
+# プレイヤーが抜けた際に関数が終了する
+(CreativeObject:creative_object_interface).AwaitPlayerLeaved(InPlayer:player)<suspends>:void=
+    loop:
+        LeavedPlayer := CreativeObject.GetPlayspace().PlayerRemovedEvent().Await()
+        if(InPlayer = LeavedPlayer):
+            break
+
+# プレイヤーが抜けた際にFuncが終了する
+(CreativeObject:creative_object_interface).RacePlayerRemoved(InPlayer:player, Args:args, Func:type{_(:args)<suspends>:void} where args:type)<suspends>:void=
+    race:
+        CreativeObject.AwaitPlayerLeaved(InPlayer)
+        Func(Args)
+
+# プレイヤーが抜けた際にFuncが実行される
+(CreativeObject:creative_object_interface).DeferPlayerRemoved(InPlayer:player, Args:args, Func:type{_(:args):void} where args:type)<suspends>:void=
+    CreativeObject.AwaitPlayerLeaved(InPlayer)
+    Func(Args)
+	
+	using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+
+AgentToMessage<localizes>(Agent:agent):message="{Agent}"
+
+leave_test_device<public> := class(creative_device):
+
+    var PlayersInIsland : []player = array{}
+
+    OnBegin<override>()<suspends>:void=
+        for(Index -> Player : GetPlayspace().GetPlayers()):
+            set PlayersInIsland += array{Player}
+            spawn{RacePlayerRemoved(Player, Player, PrintEverySeconds)}
+            spawn{DeferPlayerRemoved(Player, ("抜けました", Index), PlayerRemoved)}
+            spawn{DeferPlayerRemoved(Player, Player, PlayerRemoved2)}
+
+    PrintEverySeconds(InPlayer:player)<suspends>:void=
+        loop:
+            Sleep(1.0)
+            Print(AgentToMessage(InPlayer))
+
+    PlayerRemoved(Message:string, ID:int):void=
+        Print("{Message} : {ID}")
+
+    PlayerRemoved2(InPlayer:player):void=
+        set PlayersInIsland = PlayersInIsland.RemoveAllElements(InPlayer)
