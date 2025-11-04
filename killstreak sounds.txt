@@ -1,0 +1,99 @@
+using { /Fortnite.com/Characters }
+using { /Fortnite.com/Game }
+using { /Fortnite.com/Devices }
+using { /Verse.org/Colors/NamedColors }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /Verse.org/Random }
+
+SM<localizes>(Message: string) : message ="{Message}"
+GetUsername<localizes>(Player: player): message = "{Player}"
+
+custom_player := class<unique>:
+    AT : agent
+    FC : fort_character
+    PR : player
+    var Streak : int = 0
+    var LastRandomSoundIndex : int = 0
+    Init():void=
+        Print("Hello World!")
+    
+    IncrementStreak():void=
+        Print("Adding +1 Streak")
+        set Streak += 1
+    
+    ResetStreak():void=
+        Print("Reseting Streak")
+        set Streak = 0
+
+streak_manager := class(creative_device):
+    @editable Goals : []int = array{}
+    @editable SoundToPlay : []audio_player_device = array{}
+    @editable PlayerSpawners : []player_spawner_device = array{}
+    var PlayersMap : [player]custom_player = map{}
+
+    OnBegin<override>()<suspends>:void=
+        for (PlayerSpawner : PlayerSpawners):
+            PlayerSpawner.SpawnedEvent.Subscribe(PlayerSpawned)
+
+
+    PlayerSpawned(Agent: agent):void=
+        if:
+            PlayerObject := player[Agent]
+        then:
+            if (RealPlayer := PlayersMap[PlayerObject]){}
+            else:
+                if (NewPlayer := custom_player{AT := Agent, PR := PlayerObject, FC := Agent.GetFortCharacter[]}):
+                    if (set PlayersMap[PlayerObject] = NewPlayer):
+                            NewPlayer.Init()
+                            NewPlayer.FC.EliminatedEvent().Subscribe(PlayerEliminated)
+
+    PlayerEliminated(ER: elimination_result):void=
+        EliminatedFC := ER.EliminatedCharacter
+        EliminatorFC := ER.EliminatingCharacter
+        if (FC := EliminatorFC?, EliminatingAgent := FC.GetAgent[] , Player := player[EliminatingAgent]):
+            if (CP := PlayersMap[EliminatingAgent]):
+                CP.IncrementStreak()
+                spawn:
+                    CheckStreak(EliminatingAgent)
+                User := Localize(GetUsername(Player));
+                Print("{User} Now have {CP.Streak} Kills Streak")
+        if (FC := EliminatedFC,EliminatedAgent := FC.GetAgent[], Player := player[EliminatedAgent]):
+            if(CP := PlayersMap[EliminatedAgent] ):
+                CP.ResetStreak()
+                spawn:
+                    CheckStreak(EliminatedAgent)
+                User := Localize(GetUsername(Player));
+                Print("{User} Now have {CP.Streak} Kills Streak")
+
+    CheckStreak(Agent: agent)<suspends>: void =
+        if (Player := PlayersMap[Agent]):
+            lastIndex := Goals.Length - 1
+            for (I := 0..lastIndex):
+                if (Player.Streak = Goals[I], Sound := SoundToPlay[I]):
+                    previousIndex := GetPreviousIndex(I)
+                    if (SoundToP := SoundToPlay[previousIndex]):
+                        SoundToP.Stop(Agent)
+                    Sound.Play(Agent)
+                    Print("Played Sound N°{I}")
+            if (Player.Streak > Goals[lastIndex] , Sound := SoundToPlay[lastIndex]):
+                if(SoundToP := SoundToPlay[lastIndex]):
+                    SoundToP.Stop(Agent)
+                    Print("Stopped the last sound")
+                Sleep(0.1)
+                Print("Playing it again")
+                Sound.Play(Agent)
+                Print("Played Sound N°{lastIndex}Repeating")        
+
+                
+
+        
+    GetPreviousIndex(currentIndex: int): int =
+        if (currentIndex > 0):
+            return currentIndex - 1
+        else:
+            return currentIndex
+
+    
+                
+            
