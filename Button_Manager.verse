@@ -1,39 +1,3 @@
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -134,35 +98,35 @@ SpawnerButton:= class<concrete>():
 
     #Devices that can be used to activate the button/unlockable
     TT_SB_ActivateDevices<localizes>:message = "Devices that can be used to activate the button/unlockable"
-    @editable{ToolTip := TT_SB_ActivateDevices} ActivateDevices : ActivateDevice = ActivateDevice{}
+    @editable ActivateDevices : ActivateDevice = ActivateDevice{}
 
     TT_SB_ActivateDevicesToShow<localizes>:message = "Devices that are enabled / shown / hidden upon successful purchase"
-    @editable{ToolTip := TT_SB_ActivateDevicesToShow} ActivateDevicesToShow : []ActivateDevice = array{}
+    @editable ActivateDevicesToShow : []ActivateDevice = array{}
 
     TT_SB_ItemsToShow<localizes>:message = "List of props that will show when the button is purchased"
-    @editable{ToolTip := TT_SB_ItemsToShow} ItemsToShow: []creative_prop = array{}
+    @editable ItemsToShow: []creative_prop = array{}
 
     TT_SB_ItemsToHide<localizes>:message = "List of props that will be hidden when the button is purchased (usually used to hide the button prop after it is purchased)"
-    @editable{ToolTip := TT_SB_ItemsToHide} ItemsToHide: []creative_prop = array{}      
+    @editable ItemsToHide: []creative_prop = array{}      
 
     TT_SB_ExtraDevices<localizes>:message = "Devices that are activated upon successful purchase"
-    @editable{ToolTip := TT_SB_ExtraDevices} ExtraDevices : ExtraDevice = ExtraDevice{}
+    @editable ExtraDevices : ExtraDevice = ExtraDevice{}
 
     var BuildHouseXP : accolades_device = accolades_device{}  
     var PurchaseMSG : hud_message_device = hud_message_device{}     
     var NotEnoughMoneyMSG : hud_message_device = hud_message_device{}      
     
     TT_SB_CostResources<localizes>:message = "Resources that the button costs"
-    @editable{ToolTip := TT_SB_CostResources} CostResources : []SpendableResource = array{}
+    @editable CostResources : []SpendableResource = array{}
 
     TT_SB_GainResources<localizes>:message = "Resources that the player gains upon purchasing the button"
-    @editable{ToolTip := TT_SB_GainResources} GainResources : []GainableResource = array{}
+    @editable GainResources : []GainableResource = array{}
 
     TT_SB_RiseAnimation<localizes>:message = "Whether or not the props shown should play an animation"
-    @editable{ToolTip := TT_SB_RiseAnimation} RiseAnimation : logic = false 
+    @editable RiseAnimation : logic = false 
 
     TT_SB_ShowVFX<localizes>:message = "Whether or not the button should show a vfx when a player purchases it"
-    @editable{ToolTip := TT_SB_ShowVFX} ShowVFX : logic = false
+    @editable ShowVFX : logic = false
 
     #Resets the button back to its hidden state
     ResetButton(Agent:agent)<suspends> : void=
@@ -275,10 +239,10 @@ Button_Manager := class(creative_device):
     #Base Stuff
     PersistanceManager : Tycoon_Persistence_Manager = Tycoon_Persistence_Manager{}
     TT_BM_GameManager<localizes>:message = "Your main game manager device"
-    @editable{ToolTip := TT_BM_GameManager} GameManager: Game_Manager = Game_Manager{}
+    @editable GameManager: Game_Manager = Game_Manager{}
 
     TT_BM_ResourceManager<localizes>:message = "Your Resource Manager Device"
-    @editable{ToolTip := TT_BM_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
 
     ResetEvent : event(agent) = event(agent){}
     PlotClaimedEvent : event(agent) = event(agent){}
@@ -288,37 +252,37 @@ Button_Manager := class(creative_device):
     #Additional devices that applies to every button
     #Additional devices that applies to every button
     TT_BM_FailedMSG<localizes>:message = "A hud message device that shows a message when the player tries to purchase a button but does not have enough resources"
-    @editable{ToolTip := TT_BM_FailedMSG} FailedMSG : hud_message_device = hud_message_device{} #Hud msg when button fails
+    @editable FailedMSG : hud_message_device = hud_message_device{} #Hud msg when button fails
 
     TT_BM_PurchasedMSG<localizes>:message = "A hud message device that shows a message when the player successfully purchases a button"
-    @editable{ToolTip := TT_BM_PurchasedMSG} PurchasedMSG : hud_message_device = hud_message_device{}  #Hud msg when button succeeds
+    @editable PurchasedMSG : hud_message_device = hud_message_device{}  #Hud msg when button succeeds
 
     TT_BM_PurchaseXP<localizes>:message = "An accolades device that grants XP when a player successfully purchases a button"
-    @editable{ToolTip := TT_BM_PurchaseXP} PurchaseXP : accolades_device = accolades_device{}  #XP granted when button succeeds
+    @editable PurchaseXP : accolades_device = accolades_device{}  #XP granted when button succeeds
 
 
     TT_BM_ButtonsArray<localizes>:message = "Main array of all buttons in a plot and settings to control how they are hidden"
-    @editable{ToolTip := TT_BM_ButtonsArray} ButtonsArray: []SpawnerButton = array{}
+    @editable ButtonsArray: []SpawnerButton = array{}
 
     TT_BM_ZOffset<localizes>:message = "The Z offset for all the hidden button (Recommended range : 15,000.0 - 50,000.0)"
-    @editable{ToolTip := TT_BM_ZOffset} ZOffset : float = 0.0
+    @editable ZOffset : float = 0.0
 
     TT_BM_PropsHiddenAtATime<localizes>:message = "The amount of props that should be hidden at a time at the start or when the plot resets (Recommended range : 3 - 10)"
-    @editable{ToolTip := TT_BM_PropsHiddenAtATime} PropsHiddenAtATime : int = 0
+    @editable PropsHiddenAtATime : int = 0
 
     
     #Extra Settings
     TT_BM_ButtonsColorChange<localizes>:message = "Whether or not the buttons should change color based on whether the player can afford them"
-    @editable{ToolTip := TT_BM_ButtonsColorChange} ButtonsColorChange : logic = false
+    @editable ButtonsColorChange : logic = false
 
     TT_BM_IndicatorSettings<localizes>:message = "Settings for the map indicator"
-    @editable{ToolTip := TT_BM_IndicatorSettings} IndicatorSettings : IndicatorSetting = IndicatorSetting{}
+    @editable IndicatorSettings : IndicatorSetting = IndicatorSetting{}
 
     TT_BM_ButtonPlayerLocationVFX<localizes>:message = "A vfx device that spawns at the button when a player purchases it\n*Required Settings*\nCustom Visual Effect Override : True\nCustom Visual Effect : Your Custom Button VFX\nEnable On Reset : True\nClear Particles On Disable : False"
-    @editable{ToolTip := TT_BM_ButtonPlayerLocationVFX} ButtonPlayerLocationVFX : vfx_spawner_device = vfx_spawner_device{}
+    @editable ButtonPlayerLocationVFX : vfx_spawner_device = vfx_spawner_device{}
 
     TT_BM_ButtonRiseAnimationSettings<localizes>:message = "Control how the rise animation works/displays"
-    @editable{ToolTip := TT_BM_ButtonRiseAnimationSettings} ButtonRiseAnimationSettings : ButtonRiseAnimationSetting = ButtonRiseAnimationSetting{}
+    @editable ButtonRiseAnimationSettings : ButtonRiseAnimationSetting = ButtonRiseAnimationSetting{}
 
     #===============================================================================================================================================
     #FIRST ELEMENT IS WHEN THE PLAYER HAS ENOUGH, SECOND IS WHEN THEY DO NOT
@@ -444,25 +408,25 @@ Button_Manager := class(creative_device):
 #Settings used to control the indicator
 IndicatorSetting:= class<concrete>():
     TT_IS_IndicatorButtonOrder<localizes>:message = "The element of the button inside the buttons array that the map indicator should point to. Goes in order starting after the purchase of the first element in this array"
-    @editable{ToolTip := TT_IS_IndicatorButtonOrder} IndicatorButtonOrder : []int = array{}
+    @editable IndicatorButtonOrder : []int = array{}
 
     TT_IS_MapIndicatorDevice<localizes>:message = "The map indicator device that displays an line toward the next button"
-    @editable{ToolTip := TT_IS_MapIndicatorDevice} MapIndicatorDevice : map_indicator_device = map_indicator_device{}
+    @editable MapIndicatorDevice : map_indicator_device = map_indicator_device{}
 
 #Different devices that are activated for each unlockable
 ExtraDevice := class<concrete>():
     TT_ED_EnableTrigger<localizes>:message = "A trigger device that gets triggered when the button is purchased"
-    @editable{ToolTip := TT_ED_EnableTrigger} EnableTrigger : trigger_device = trigger_device{}
+    @editable EnableTrigger : trigger_device = trigger_device{}
 
     TT_ED_DisableTrigger<localizes>:message = "A trigger device is triggered when the button reset"
-    @editable{ToolTip := TT_ED_DisableTrigger} DisableTrigger : trigger_device = trigger_device{}
+    @editable DisableTrigger : trigger_device = trigger_device{}
 
     TT_ED_Cinematic<localizes>:message = "A cinematic device that plays when the button is purchased"
-    @editable{ToolTip := TT_ED_Cinematic} Cinematic : cinematic_sequence_device = cinematic_sequence_device{}
+    @editable Cinematic : cinematic_sequence_device = cinematic_sequence_device{}
 
     TT_ED_CarSpawner1<localizes>:message = "A vehicle spawner device that gets disabled when the button is purchased"
-    @editable{ToolTip := TT_ED_CarSpawner1} CarSpawner1 : vehicle_spawner_sports_car_device = vehicle_spawner_sports_car_device{}
+    @editable CarSpawner1 : vehicle_spawner_sports_car_device = vehicle_spawner_sports_car_device{}
 
     TT_ED_CarSpawner2<localizes>:message = "A vehicle spawner device that gets enabled when the button is purchased"
-    @editable{ToolTip := TT_ED_CarSpawner2} CarSpawner2 : vehicle_spawner_sports_car_device = vehicle_spawner_sports_car_device{}
+    @editable CarSpawner2 : vehicle_spawner_sports_car_device = vehicle_spawner_sports_car_device{}
 

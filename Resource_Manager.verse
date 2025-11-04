@@ -367,7 +367,7 @@ ResourceCollectType := enum:
 #Base resource class that all resources are inherited from
 BaseResource := class<concrete>():    
     TT_BR_ResourceName<localizes>:message = "Unique Identifier Used to determinate between different resources"
-    @editable{ToolTip := TT_BR_ResourceName} ResourceName : string = ""
+    @editable ResourceName : string = ""
 
 
 RebirthResource := class<concrete>(BaseResource):  
@@ -380,45 +380,45 @@ RebirthResource := class<concrete>(BaseResource):
 #Resource the can be gained
 GainableResource := class<concrete>(BaseResource):    
     TT_GR_Resource_Amount<localizes>:message = "The amount of resource the player gains"
-    @editable{ToolTip := TT_GR_Resource_Amount} Amount : float = 0.0
+    @editable Amount : float = 0.0
 
     TT_GR_Resource_EffectIdleAmount<localizes>:message = "Whether or not the resource\'s idle amount is effected"
-    @editable{ToolTip := TT_GR_Resource_EffectIdleAmount} EffectIdleAmount : logic  = false
+    @editable EffectIdleAmount : logic  = false
 
     TT_GR_EffectSecondAmount<localizes>:message = "Whether or not the resource\'s second amount is effected"
-    @editable{ToolTip := TT_GR_EffectSecondAmount} EffectSecondAmount : logic = false
+    @editable EffectSecondAmount : logic = false
 
     TT_GR_EffectedByBoost<localizes>:message = "Whether or not the collection of this resource is effected by its boost amount"
-    @editable{ToolTip := TT_GR_EffectedByBoost} EffectedByBoost : logic = true
+    @editable EffectedByBoost : logic = true
 
     TT_GR_ShowPopUp<localizes>:message = "Whether or not the collection of this resource will make a pop up appear on the players screen"
-    @editable{ToolTip := TT_GR_ShowPopUp} ShowPopUp : logic = false
+    @editable ShowPopUp : logic = false
 
     TT_GR_CollectTheSecondAmountMultiplier<localizes>:message = "Whether or not the resorce\'s second amount is the amount collected/removed. If Enabled, will allow for selection of a multiplier applied to the new amount. Overrides the 'Amount'"
-    @editable{ToolTip := TT_GR_CollectTheSecondAmountMultiplier} CollectTheSecondAmountMultiplier : ?float = false
+    @editable CollectTheSecondAmountMultiplier : ?float = false
 
     TT_GR_OverrideRebirthEffect<localizes>:message = "If Enabled, overrides the resources default 'EffectedByRebirth' state and can be either disabled or enabled"
-    @editable{ToolTip := TT_GR_OverrideRebirthEffect} OverrideRebirthEffect : ?logic = false
+    @editable OverrideRebirthEffect : ?logic = false
 
     TT_GR_OverridePopUpSettings<localizes>:message = "If Enabled, overrides the default 'BasePopUpSettings' and allows for the creation of custom pop up settings for this collection"
-    @editable{ToolTip := TT_GR_OverridePopUpSettings} OverridePopUpSettings : ?PopUpAnimationSetting = false
+    @editable OverridePopUpSettings : ?PopUpAnimationSetting = false
 
 #Resource the can be spent
 SpendableResource := class<concrete>(BaseResource):    
     TT_SR_Resource_EffectIdleAmount<localizes>:message = "Whether or not the resource\'s idle amount is effected"
-    @editable{ToolTip := TT_SR_Resource_EffectIdleAmount} EffectIdleAmount : logic  = false
+    @editable EffectIdleAmount : logic  = false
 
     TT_SR_EffectSecondAmount<localizes>:message = "Whether or not the resource\'s second amount is effected"
-    @editable{ToolTip := TT_SR_EffectSecondAmount} EffectSecondAmount : logic = false
+    @editable EffectSecondAmount : logic = false
 
     TT_SR_RemoveTheSecondAmountMultiplier<localizes>:message = "Whether or not the resorce\'s second amount is the amount collected/removed. If Enabled, will allow for selection of a multiplier applied to the new amount. Overrides the 'Amount'"
-    @editable{ToolTip := TT_SR_RemoveTheSecondAmountMultiplier} RemoveTheSecondAmountMultiplier : ?float = false
+    @editable RemoveTheSecondAmountMultiplier : ?float = false
 
     TT_SR_Resource_RemoveResource<localizes>:message = "Whether or not the resource is removed (if false, this will just check if the player has this amount of resource)"
-    @editable{ToolTip := TT_SR_Resource_RemoveResource} RemoveResource : logic = true
+    @editable RemoveResource : logic = true
 
     TT_SR_Resource_Amount<localizes>:message = "The amount of resource required"
-    @editable{ToolTip := TT_SR_Resource_Amount} Amount : float = 0.0
+    @editable Amount : float = 0.0
 
 
 #Resource that is reset
@@ -470,10 +470,10 @@ ResourceUISettings := class<concrete>(BaseUISettings):
 #Settings that control a resources boost amount
 BoostSetting := class<concrete>():
     TT_BS_BoostSetting_ShouldBoostImageAppearOnHud<localizes>:message = "Whether or not the boost image should appear on the hud"
-    @editable{ToolTip := TT_BS_BoostSetting_ShouldBoostImageAppearOnHud} ShouldBoostImageAppearOnHud : logic = false
+    @editable ShouldBoostImageAppearOnHud : logic = false
     
     TT_BS_BoostSetting_ShouldBoostTextAppearOnHud<localizes>:message = "Whether or not the boost text should appear on the hud"
-    @editable{ToolTip := TT_BS_BoostSetting_ShouldBoostTextAppearOnHud} ShouldBoostTextAppearOnHud : logic = false
+    @editable ShouldBoostTextAppearOnHud : logic = false
 
     @editable ShouldBoostReset : logic = false
     @editable TextSettings : TextSetting = TextSetting{}
@@ -483,10 +483,10 @@ BoostSetting := class<concrete>():
 #Settings that control a resources idle amount
 IdleSetting := class<concrete>():
     TT_IS_IdleSetting_ShouldIdleImageAppearOnHud<localizes>:message = "Whether or not the idle image should appear on the hud"
-    @editable{ToolTip := TT_IS_IdleSetting_ShouldIdleImageAppearOnHud} ShouldIdleImageAppearOnHud : logic = false
+    @editable ShouldIdleImageAppearOnHud : logic = false
 
     TT_IS_IdleSetting_ShouldIdleTextAppearOnHud<localizes>:message = "Whether or not the idle text should appear on the hud"
-    @editable{ToolTip := TT_IS_IdleSetting_ShouldIdleTextAppearOnHud} ShouldIdleTextAppearOnHud : logic = false
+    @editable ShouldIdleTextAppearOnHud : logic = false
 
     @editable TextSettings : TextSetting = TextSetting{}
     @editable IdleImagePosition : CanvasPosition = CanvasPosition{}
@@ -503,22 +503,22 @@ AdditionalCollector := class<concrete>():
     var ResourceManager : Resource_Manager = Resource_Manager{}
 
     TT_AC_ActivateTrigger<localizes>:message = "Trigger device used to activate this additional collector"
-    @editable{ToolTip := TT_AC_ActivateTrigger} ActivateTrigger : trigger_device = trigger_device{}
+    @editable ActivateTrigger : trigger_device = trigger_device{}
 
     TT_AC_SuccessfulSpendTrigger<localizes>:message = "Trigger device that is triggered when resources defined in 'SpendResources' are successfully spent"
-    @editable{ToolTip := TT_AC_SuccessfulSpendTrigger} SuccessfulSpendTrigger : trigger_device = trigger_device{}
+    @editable SuccessfulSpendTrigger : trigger_device = trigger_device{}
 
     TT_AC_CollectResources<localizes>:message = "Resources that are collected when this collector is activated"
-    @editable{ToolTip := TT_AC_CollectResources} CollectResources : []AdditionalCollectorResource = array{}
+    @editable CollectResources : []AdditionalCollectorResource = array{}
 
     TT_AC_SpendResources<localizes>:message = "Resources that are spent when this collector is activated"
-    @editable{ToolTip := TT_AC_SpendResources} SpendResources : []SpendableResource = array{}
+    @editable SpendResources : []SpendableResource = array{}
 
     TT_AC_BoostResources<localizes>:message = "Resources that are boosted when this collector is activated"
-    @editable{ToolTip := TT_AC_BoostResources} BoostResources : []BoostResource = array{}
+    @editable BoostResources : []BoostResource = array{}
 
     TT_AC_RemoveBoostResources<localizes>:message = "Resources boosts that are removed when this collector is activated"
-    @editable{ToolTip := TT_AC_RemoveBoostResources} RemoveBoostResources : []BoostResource = array{}
+    @editable RemoveBoostResources : []BoostResource = array{}
 
 
 
@@ -540,34 +540,34 @@ AdditionalCollector := class<concrete>():
 #Resource the can be gained
 AdditionalCollectorResource := class<concrete>(BaseResource):    
     TT_ACR_Resource_Amount<localizes>:message = "The amount of resource the player gains"
-    @editable{ToolTip := TT_ACR_Resource_Amount} Amount : float = 0.0
+    @editable Amount : float = 0.0
 
     TT_ACR_Resource_EffectIdleAmount<localizes>:message = "Whether or not the resource\'s idle amount is effected"
-    @editable{ToolTip := TT_ACR_Resource_EffectIdleAmount} EffectIdleAmount : logic  = false
+    @editable EffectIdleAmount : logic  = false
 
     TT_ACR_EffectSecondAmount<localizes>:message = "Whether or not the resource\'s second amount is effected"
-    @editable{ToolTip := TT_ACR_EffectSecondAmount} EffectSecondAmount : logic = false
+    @editable EffectSecondAmount : logic = false
 
     TT_ACR_EffectedByBoost<localizes>:message = "Whether or not the collection of this resource is effected by its boost amount"
-    @editable{ToolTip := TT_ACR_EffectedByBoost} EffectedByBoost : logic = true
+    @editable EffectedByBoost : logic = true
 
     TT_ACR_ShowPopUp<localizes>:message = "Whether or not the collection of this resource will make a pop up appear on the players screen"
-    @editable{ToolTip := TT_ACR_ShowPopUp} ShowPopUp : logic = false
+    @editable ShowPopUp : logic = false
 
     TT_ACR_CollectTheSecondAmountMultiplier<localizes>:message = "Whether or not the resorce\'s second amount is the amount collected/removed. If Enabled, will allow for selection of a multiplier applied to the new amount. Overrides the 'Amount'"
-    @editable{ToolTip := TT_ACR_CollectTheSecondAmountMultiplier} CollectTheSecondAmount : ?float = false
+    @editable CollectTheSecondAmount : ?float = false
 
     TT_ACR_OverrideRebirthEffect<localizes>:message = "If Enabled, overrides the resources default 'EffectedByRebirth' state and can be either disabled or enabled"
-    @editable{ToolTip := TT_ACR_OverrideRebirthEffect} OverrideRebirthEffect : ?logic = false
+    @editable OverrideRebirthEffect : ?logic = false
 
     TT_ACR_OverridePopUpSettings<localizes>:message = "If Enabled, overrides the default 'BasePopUpSettings' and allows for the creation of custom pop up settings for this collection"
-    @editable{ToolTip := TT_ACR_OverridePopUpSettings} OverridePopUpSettings : ?PopUpAnimationSetting = false
+    @editable OverridePopUpSettings : ?PopUpAnimationSetting = false
 
     TT_ACR_RandomAmountRange<localizes>:message = "If set, 'Amount' will be a random value between the two values defined"
-    @editable{ToolTip := TT_ACR_RandomAmountRange} RandomAmountRange : ?vector2 = false
+    @editable RandomAmountRange : ?vector2 = false
 
     TT_ACR_StealFromRandomPlayer<localizes>:message = "A hud message device that if set, will 'steal' the amount specified from a random player (if no player can afford it, a failure message will be displayed instead) *Required Settings*\nMessage Recipient : Triggering Player\nDisplay Time : 3-5 Seconds"
-    @editable{ToolTip := TT_ACR_StealFromRandomPlayer} StealFromRandomPlayer : ?hud_message_device = false
+    @editable StealFromRandomPlayer : ?hud_message_device = false
 
 
 Player_Resource_Data := class<unique>(Base_Player):
@@ -1083,13 +1083,13 @@ ResourceUI := class():
 
 Resource_Details := class<concrete>():                                                              
     TT_Resources<localizes>:message = "All of the resources that the players can collect (e.g. Money, Gems, etc.)"
-    @editable{ToolTip := TT_Resources} Resources : []GeneralResource = array{}
+    @editable Resources : []GeneralResource = array{}
 
     TT_AdditionalCollectors<localizes>:message = "A list of custom mechanics that can be used to collect/spend resources"
-    @editable{ToolTip := TT_AdditionalCollectors} AdditionalCollectors : []AdditionalCollector = array{}
+    @editable AdditionalCollectors : []AdditionalCollector = array{}
 
     TT_BasePopUpSettings<localizes>:message = "Base Pop Up Settings used by resources. Icons for each resource are set inside RPG_Attribute_Manager.verse inside ResourcePopUpTextures"
-    @editable{ToolTip := TT_BasePopUpSettings} PopUpSettings : PopUpAnimationSetting = PopUpAnimationSetting{}
+    @editable PopUpSettings : PopUpAnimationSetting = PopUpAnimationSetting{}
 
 Resource_Manager := class(creative_device):
 
@@ -1105,7 +1105,7 @@ Resource_Manager := class(creative_device):
     
 
     TT_ResetUITrigger<localizes>:message = "Trigger Device that when triggered will reset all of the resource UI elements for a player"
-    @editable{ToolTip := TT_ResetUITrigger} ResetUITrigger : trigger_device = trigger_device{}
+    @editable ResetUITrigger : trigger_device = trigger_device{}
 
 
     #Initializes players and sets up other devices

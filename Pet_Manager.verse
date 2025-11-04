@@ -1,39 +1,3 @@
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -52,41 +16,41 @@ using { /Fortnite.com/Characters }
 Pet_Manager := class(creative_device):
     #Devices
     TT_PetManager_Device_GameManager<localizes>:message = "Your Game Manager device"
-    @editable{ToolTip := TT_PetManager_Device_GameManager} GameManager : Game_Manager = Game_Manager{}       
+    @editable GameManager : Game_Manager = Game_Manager{}       
 
     TT_PetManager_Device_ResourceManager<localizes>:message = "Your Resource Manager device"
-    @editable{ToolTip := TT_PetManager_Device_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
 
     TT_PetManager_Device_PurchaseXP<localizes>:message = "The accolades device which is used to award the player xp for purchasing a pet"
-    @editable{ToolTip := TT_PetManager_Device_PurchaseXP} PurchaseXP : accolades_device = accolades_device{}
+    @editable PurchaseXP : accolades_device = accolades_device{}
 
     TT_PetManager_Device_PurchaseSuccessSound<localizes>:message = "The audio player device which is used to play the sound when a pet is purchased\n*Required Settings*\n Can be heard by : Instigator Only\n Play Location : Instigating Player"
-    @editable{ToolTip := TT_PetManager_Device_PurchaseSuccessSound} PurchaseSuccessSound : audio_player_device = audio_player_device{}
+    @editable PurchaseSuccessSound : audio_player_device = audio_player_device{}
     
     TT_PetManager_Device_PurchaseFailureSound<localizes>:message = "The audio player device which is used to play the sound when a pet cannot be purchased\n*Required Settings*\n Can be heard by : Instigator Only\n Play Location : Instigating Player"
-    @editable{ToolTip := TT_PetManager_Device_PurchaseFailureSound} PurchaseFailureSound : audio_player_device = audio_player_device{}
+    @editable PurchaseFailureSound : audio_player_device = audio_player_device{}
     
     TT_PetManager_Device_PurchaseFailMSG<localizes>:message = "The hud message device which is used to display the message when a pet cannot be purchased\n*Required Settings*\nMessage Recipient : Triggering Player"
-    @editable{ToolTip := TT_PetManager_Device_PurchaseFailMSG} PurchaseFailMSG : hud_message_device = hud_message_device{}                     
+    @editable PurchaseFailMSG : hud_message_device = hud_message_device{}                     
     
     TT_PetManager_Device_AlreadyHaveMSG<localizes>:message = "The hud message device which is used to display the message when a player already has a pet equipped\n*Required Settings*\nMessage Recipient : Triggering Player"
     @editable AlreadyHaveMSG : hud_message_device = hud_message_device{}                  
     
     TT_PetManager_Device_SuccessMSG<localizes>:message = "The hud message device which is used to display the message when a pet is purchased\n*Required Settings*\nMessage Recipient : Triggering Player"
-    @editable{ToolTip := TT_PetManager_Device_SuccessMSG} SuccessMSG : hud_message_device = hud_message_device{}
+    @editable SuccessMSG : hud_message_device = hud_message_device{}
     
     TT_PetManager_Device_MustPurchaseFirstMSG<localizes>:message = "The hud message device which is used to display the message when a player must purchase a pet first\n*Required Settings*\nMessage Recipient : Triggering Player"
-    @editable{ToolTip := TT_PetManager_Device_MustPurchaseFirstMSG} MustPurchaseFirstMSG : hud_message_device = hud_message_device{}
+    @editable MustPurchaseFirstMSG : hud_message_device = hud_message_device{}
 
     #Settings
     TT_PetManager_Device_AllPets<localizes>:message = "The array of all pets"
-    @editable{ToolTip := TT_PetManager_Device_AllPets} AllPets : []PetBuyable = array{}
+    @editable AllPets : []PetBuyable = array{}
     
     TT_PetManager_Device_ShopSettings<localizes>:message = "The shop settings for the pet shop"
-    @editable{ToolTip := TT_PetManager_Device_ShopSettings} ShopSettings : PetShopSetting = PetShopSetting{}
+    @editable ShopSettings : PetShopSetting = PetShopSetting{}
 
     TT_RBM_Device_AddedPlayerTrigger<localizes>:message = "A trigger device that get triggered when a player is added to the plot"
-    @editable{ToolTip := TT_RBM_Device_AddedPlayerTrigger} PlayerAddedToPlotTrigger : trigger_device = trigger_device{}
+    @editable PlayerAddedToPlotTrigger : trigger_device = trigger_device{}
 
     #Map of all players info
     var PlayersPetMap : [player]PlayerPets = map{}      
@@ -250,24 +214,24 @@ Pet_Manager := class(creative_device):
 PetBuyable := class<concrete>(Buyable):
     #Devices
     TT_PetManager_Device_PetProp<localizes>:message = "The prop that is used to display the pet"
-    @editable{ToolTip := TT_PetManager_Device_PetProp} PetProp : creative_prop_asset = DefaultCreativePropAsset
+    @editable PetProp : creative_prop_asset = DefaultCreativePropAsset
     var PetManager : Pet_Manager = Pet_Manager{}
 
     #Settings
     TT_PetManager_Device_PetHoverHeight<localizes>:message = "The height relative to the player that the pet will hover at"
-    @editable{ToolTip := TT_PetManager_Device_PetHoverHeight} PetHoverHeight : float = 0.0
+    @editable PetHoverHeight : float = 0.0
     
     TT_PetManager_Device_DistanceAllowedNearPlayer<localizes>:message = "How close the pet will get to the player"
-    @editable{ToolTip := TT_PetManager_Device_DistanceAllowedNearPlayer} DistanceAllowedNearPlayer : float = 0.0
+    @editable DistanceAllowedNearPlayer : float = 0.0
     
     TT_PetManager_Device_ConstantSpeedCMPerS<localizes>:message = "The speed at which the pet will move towards the player"
-    @editable{ToolTip := TT_PetManager_Device_ConstantSpeedCMPerS} ConstantSpeedCMPerS : ?float = false
+    @editable ConstantSpeedCMPerS : ?float = false
 
     TT_PetManager_Device_TimedSpeed<localizes>:message = "If set, the pet will always take this long to reach the player regardless of distance"
-    @editable{ToolTip := TT_PetManager_Device_TimedSpeed} TimedSpeed : ?float = false
+    @editable TimedSpeed : ?float = false
 
     TT_PetManager_Device_IdleAnimation<localizes>:message = "If true, the pet will play an idle animation when it is not moving"
-    @editable{ToolTip := TT_PetManager_Device_IdleAnimation} IdleAnimation : logic = false
+    @editable IdleAnimation : logic = false
 
     #Extra
     var DespawnEvent : event() = event(){}

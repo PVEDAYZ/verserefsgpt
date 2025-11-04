@@ -1,38 +1,3 @@
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -74,25 +39,25 @@ ColorOption := class<concrete>():
 
     #Editables
     TT_CM_Setting_ImageIDX<localizes>:message = "The index of the image in the PrePurchaseImages and PostPurchaseImages arrays to use for the color"
-    @editable{ToolTip := TT_CM_Setting_ImageIDX} ImageIDX : int = 0
+    @editable ImageIDX : int = 0
 
     TT_CM_Setting_MaterialIDX<localizes>:message = "The index of the material in the Mats array to use for the color"
-    @editable{ToolTip := TT_CM_Setting_MaterialIDX} MaterialIDX : int = 0
+    @editable MaterialIDX : int = 0
 
     TT_CM_Setting_SuccessSound<localizes>:message = "An audio player device that will play when the color is purchased\n*Required Settings*\nAudio : The sound to play\nCan Be Heard By : Instigator Only\nPlay Location : Instigating Player"
-    @editable{ToolTip := TT_CM_Setting_SuccessSound} SuccessSound : audio_player_device = audio_player_device{}
+    @editable SuccessSound : audio_player_device = audio_player_device{}
 
     TT_CM_Setting_FailureSound<localizes>:message = "An audio player device that will play when the player tries to purchase a color without enough resources\n*Required Settings*\nAudio : The sound to play\nCan Be Heard By : Instigator Only\nPlay Location : Instigating Player"
-    @editable{ToolTip := TT_CM_Setting_FailureSound} FailureSound : audio_player_device = audio_player_device{}
+    @editable FailureSound : audio_player_device = audio_player_device{}
 
     TT_CM_Setting_PurchaseXP<localizes>:message = "An accolades device that will award the player XP when the color is purchased\n*Required Settings*\nTriggering Player Only : true"
-    @editable{ToolTip := TT_CM_Setting_PurchaseXP} PurchaseXP : accolades_device = accolades_device{}
+    @editable PurchaseXP : accolades_device = accolades_device{}
 
     TT_CM_Setting_CostResources<localizes>:message = "The resources that the player must have to purchase the color"
-    @editable{ToolTip := TT_CM_Setting_CostResources} CostResources : []SpendableResource = array{}
+    @editable CostResources : []SpendableResource = array{}
   
     TT_CM_Trigger<localizes>:message = "Trigger Device used to purchase/equip this color"
-    @editable{ToolTip := TT_CM_Trigger} Trigger : trigger_device = trigger_device{}
+    @editable Trigger : trigger_device = trigger_device{}
 
 
     #Sets up the canvas for each Color option on the UI, based off of the "Combined Position Settings"
@@ -245,29 +210,29 @@ ColorChangeUI := class():
 Color_Manager := class(creative_device):
     #Devices
     TT_CM_Device_GameManager<localizes>:message = "Your Game Manager Device"
-    @editable{ToolTip := TT_CM_Device_GameManager} GameManager : Game_Manager = Game_Manager{}
+    @editable GameManager : Game_Manager = Game_Manager{}
 
     TT_CM_Device_ResourceManager<localizes>:message = "Your Resource Manager Device"
-    @editable{ToolTip := TT_CM_Device_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
 
     TT_CM_Device_ButtonManager<localizes>:message = "Your Button Manager Device"
-    @editable{ToolTip := TT_CM_Device_ButtonManager} ButtonManager : Button_Manager = Button_Manager{}
+    @editable ButtonManager : Button_Manager = Button_Manager{}
 
     TT_CM_OpenUITrigger<localizes>:message = "A trigger device that will open the color change UI"
-    @editable{ToolTip := TT_CM_OpenUITrigger} OpenUITrigger : trigger_device = trigger_device{}
+    @editable OpenUITrigger : trigger_device = trigger_device{}
 
     TT_CM_Device_Cinematic<localizes>:message = "A cinematic sequence device that will play when the button is color change pressed\n*Required Settings*\nVisibility : Instigator Only"
-    @editable{ToolTip := TT_CM_Device_Cinematic} Cinematic : cinematic_sequence_device = cinematic_sequence_device{}
+    @editable Cinematic : cinematic_sequence_device = cinematic_sequence_device{}
 
     #Settings
     TT_CM_Device_ColorChangeSettings<localizes>:message = "The settings for the color change UI"
-    @editable{ToolTip := TT_CM_Device_ColorChangeSettings} ColorChangeSettings : ColorChangeSetting = ColorChangeSetting{}
+    @editable ColorChangeSettings : ColorChangeSetting = ColorChangeSetting{}
     
     TT_CM_Device_ColorCancelSettings<localizes>:message = "The settings for closing the color change UI"
-    @editable{ToolTip := TT_CM_Device_ColorCancelSettings} ColorCancelSettings : ColorCancelSetting = ColorCancelSetting{}
+    @editable ColorCancelSettings : ColorCancelSetting = ColorCancelSetting{}
 
     TT_CM_Device_AllColors<localizes>:message = "The colors that the player can purchase"
-    @editable{ToolTip := TT_CM_Device_AllColors} AllColors : []ColorOption = array{}
+    @editable AllColors : []ColorOption = array{}
   
 
     
@@ -308,13 +273,13 @@ colorcanceltype := enum:
 #Settings to control how UI is canceled / closed
 ColorCancelSetting := class<concrete>():
     TT_CM_Setting_CancelType<localizes>:message = "How the color change UI is canceled/closed\nUI : The UI has a button that the player can click to close it\nDuration : The UI will close after a set amount of time"
-    @editable{ToolTip := TT_CM_Setting_CancelType} CancelType : colorcanceltype = colorcanceltype.UI
+    @editable CancelType : colorcanceltype = colorcanceltype.UI
 
     TT_CM_Setting_UIExitPosition<localizes>:message = "The position of the exit button on the UI *Only used if Cancel Type is UI*"
-    @editable{ToolTip := TT_CM_Setting_UIExitPosition} UIExitPosition : CanvasPosition = CanvasPosition{}
+    @editable UIExitPosition : CanvasPosition = CanvasPosition{}
     
     TT_CM_Setting_CancelDuration<localizes>:message = "The duration of the color change UI *Only used if Cancel Type is Duration*"
-    @editable{ToolTip := TT_CM_Setting_CancelDuration} CancelDuration : float = 0.0
+    @editable CancelDuration : float = 0.0
 
 #Position of each color
 ColorPosition := class<concrete>():
@@ -324,7 +289,7 @@ ColorPosition := class<concrete>():
 #Combination of other color settings to be concise
 ColorChangeSetting := class<concrete>():
     TT_CM_Setting_CombinedPositionSettings<localizes>:message = "The settings for the positioning of the each colors widgets in the color change UI"
-    @editable{ToolTip := TT_CM_Setting_CombinedPositionSettings} CombinedPositionSettings : CombinedSetting = CombinedSetting{}
+    @editable CombinedPositionSettings : CombinedSetting = CombinedSetting{}
     
     TT_CM_Setting_AllColorPositions<localizes>:message = "The nubmer of colors on the screen and their positions. Corresponds to the identical elements in the AllColors array"
-    @editable{ToolTip := TT_CM_Setting_AllColorPositions} AllColorPositions : []ColorPosition = array{} 
+    @editable AllColorPositions : []ColorPosition = array{} 

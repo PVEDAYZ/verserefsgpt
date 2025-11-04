@@ -1,39 +1,3 @@
-# <#
-# ====================================================================================================
-# Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-# This software and its associated documentation files (the "Software") are the
-
-# proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-# The Software is provided to you under the terms of the MapAcademy End User
-
-# License Agreement (the "License"). You may use, copy, distribute, and modify
-
-# the Software solely in accordance with the terms of the License.
-
- 
-
-# BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-# IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-# The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-# either express or implied, including without limitation any warranties of
-
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-# For more details, please refer to the MapAcademy End User License Agreement.
-# ====================================================================================================
-# #>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -47,38 +11,38 @@ using { /Fortnite.com/Characters}
 
 Monster_Manager := class(creative_device):
     TT_MM_Device_GameManager<localizes>:message = "Your Game Manager"
-    @editable{ToolTip := TT_MM_Device_GameManager} GameManager : Game_Manager = Game_Manager{}   
+    @editable GameManager : Game_Manager = Game_Manager{}   
     
     TT_MM_Device_ResourceManager<localizes>:message = "Your Resource Manager"
-    @editable{ToolTip := TT_MM_Device_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
     
     #Awarded on elimination
     TT_MM_Device_MonsterXP<localizes>:message = "The accolades device which is used to award the player xp for eliminating the monster"
-    @editable{ToolTip := TT_MM_Device_MonsterXP} MonsterXP : accolades_device = accolades_device{}
+    @editable MonsterXP : accolades_device = accolades_device{}
     
     TT_MM_Device_CollectResources<localizes>:message = "The resources that are collected when the monster is eliminated"
-    @editable{ToolTip := TT_MM_Device_CollectResources} CollectResources : []GainableResource = array{}
+    @editable CollectResources : []GainableResource = array{}
     
     TT_MM_Device_MonsterHUD<localizes>:message = "The hud message device which is displayed when a monster is eliminated\n*Required Settings*\nMessage Recipient : Triggering Player"
-    @editable{ToolTip := TT_MM_Device_MonsterHUD} MonsterHUD : hud_message_device = hud_message_device{}     
+    @editable MonsterHUD : hud_message_device = hud_message_device{}     
 
     #Spawners used
     TT_MM_Device_MonsterSpawners<localizes>:message = "List of creature spawner devices that are used to spawn the monsters"
-    @editable{ToolTip := TT_MM_Device_MonsterSpawners} MonsterSpawners : []creature_spawner_device = array{}      
+    @editable MonsterSpawners : []creature_spawner_device = array{}      
     
     TT_MM_Device_NPCSpawners<localizes>:message = "List of npc spawner devices that are used to spawn the monsters"
-    @editable{ToolTip := TT_MM_Device_NPCSpawners} NPCSpawners : []npc_spawner_device = array{}
+    @editable NPCSpawners : []npc_spawner_device = array{}
       
 
     #Props used to customize monster
     TT_MM_Device_MonsterWalkingProp<localizes>:message = "The prop that is used to display the monster\'s walking animation"
-    @editable{ToolTip := TT_MM_Device_MonsterWalkingProp} MonsterWalkingProp : creative_prop_asset = DefaultCreativePropAsset
+    @editable MonsterWalkingProp : creative_prop_asset = DefaultCreativePropAsset
 
     TT_MM_Device_MonsterAttackingProp<localizes>:message = "The prop that is used to display the monster\'s attacking animation"
-    @editable{ToolTip := TT_MM_Device_MonsterAttackingProp} MonsterAttackingProp : creative_prop_asset = DefaultCreativePropAsset
+    @editable MonsterAttackingProp : creative_prop_asset = DefaultCreativePropAsset
     
     TT_MM_Device_MonsterIdleProp<localizes>:message = "The prop that is used to display the monster\'s idle animation"
-    @editable{ToolTip := TT_MM_Device_MonsterIdleProp} MonsterIdleProp : creative_prop_asset = DefaultCreativePropAsset
+    @editable MonsterIdleProp : creative_prop_asset = DefaultCreativePropAsset
 
     #Initializes all spawners
     OnBegin<override>()<suspends>:void=

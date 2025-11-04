@@ -1,39 +1,3 @@
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -58,24 +22,24 @@ ATM := class<concrete>():
     
     #Devices
     TT_ATM_StartATMTrigger<localizes>:message = "A trigger deivce that activates this ATM"
-    @editable{ToolTip := TT_ATM_StartATMTrigger} StartATMTrigger : trigger_device = trigger_device{}
+    @editable StartATMTrigger : trigger_device = trigger_device{}
 
     TT_ATM_ClaimMoneyActivator<localizes>:message = "An activator device that claims the money from the ATM when activated"
-    @editable{ToolTip := TT_ATM_ClaimMoneyActivator} ClaimMoneyActivator : []ActivateDevice = array{}
+    @editable ClaimMoneyActivator : []ActivateDevice = array{}
 
 
     var ClaimMoneyHUD : hud_message_device = hud_message_device{}
 
     TT_ATM_ATMVFX<localizes>:message = "A vfx spawner device that spawns a vfx when money is claimed from the ATM"
-    @editable{ToolTip := TT_ATM_ATMVFX} ATMVFX : vfx_spawner_device = vfx_spawner_device{}
+    @editable ATMVFX : vfx_spawner_device = vfx_spawner_device{}
 
     #Resources collected by the ATM
     TT_ATM_ATMResources<localizes>:message = "The resources that are collected in the ATM"
-    @editable{ToolTip := TT_ATM_ATMResources} ATMResources : []ATMResource = array{} 
+    @editable ATMResources : []ATMResource = array{} 
 
     #Extra Settings
     TT_ATM_ATMSpeed<localizes>:message = "The speed at which the ATM collects money"
-    @editable{ToolTip := TT_ATM_ATMSpeed} ATMSpeed : float = 1.0
+    @editable ATMSpeed : float = 1.0
 
     #Starts the ATM loop for a trigger
     ATMStartTrigger(NAgent : ?agent) : void=
@@ -179,13 +143,13 @@ Plot_Manager := class(creative_device):
 
     #Base Stuff
     TT_PM_ButtonManager<localizes>:message = "Your button manager device"
-    @editable{ToolTip := TT_PM_ButtonManager} ButtonManager : Button_Manager = Button_Manager{}
+    @editable ButtonManager : Button_Manager = Button_Manager{}
 
     TT_PM_GameManager<localizes>:message = "Your game manager device"
-    @editable{ToolTip := TT_PM_GameManager} GameManager : Game_Manager = Game_Manager{}
+    @editable GameManager : Game_Manager = Game_Manager{}
 
     TT_PM_ResourceManager<localizes>:message = "Your resource manager device"
-    @editable{ToolTip := TT_PM_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
 
     PersistanceManager : Tycoon_Persistence_Manager = Tycoon_Persistence_Manager{}
     var PlotsPlayer : []agent = array{}
@@ -199,43 +163,43 @@ Plot_Manager := class(creative_device):
 
     #Devices
     TT_PM_ClaimPlotActivator<localizes>:message = "The activator device that claims the plot"
-    @editable{ToolTip := TT_PM_ClaimPlotActivator} ClaimPlotActivator : ActivateDevice = ActivateDevice{}
+    @editable ClaimPlotActivator : ActivateDevice = ActivateDevice{}
 
     TT_PM_ClaimPlotSelector<localizes>:message = "A class and team selector device that changes the player\'s team to the plot\'s team\n*Required Settings*\nTeam To Switch To: Team Index X (where X is the plot number)"
-    @editable{ToolTip := TT_PM_ClaimPlotSelector} ClaimPlotSelector : class_and_team_selector_device = class_and_team_selector_device{}  
+    @editable ClaimPlotSelector : class_and_team_selector_device = class_and_team_selector_device{}  
 
     TT_PM_ClaimMoneyHUD<localizes>:message = "A hud message device that is displayed whenever the player claims money from the ATM\n*Required Settings*\nMessage Recipient: Triggering Player"
-    @editable{ToolTip := TT_PM_ClaimMoneyHUD} ClaimMoneyHUD : hud_message_device = hud_message_device{}   
+    @editable ClaimMoneyHUD : hud_message_device = hud_message_device{}   
 
     TT_PM_ClaimPlotPlayerRef<localizes>:message = "A player reference device that displays the player that claimed the plot"
-    @editable{ToolTip := TT_PM_ClaimPlotPlayerRef} ClaimPlotPlayerRef : player_reference_device = player_reference_device{} 
+    @editable ClaimPlotPlayerRef : player_reference_device = player_reference_device{} 
 
     TT_PM_ClaimPlotHud<localizes>:message = "A hud message device that is displayed when the player claims the plot\n*Required Settings*\nMessage Recipient: Triggering Player"
-    @editable{ToolTip := TT_PM_ClaimPlotHud} ClaimPlotHud : hud_message_device = hud_message_device{}
+    @editable ClaimPlotHud : hud_message_device = hud_message_device{}
 
     TT_PM_ClaimPlotTracker<localizes>:message = "A tracker device that is incremented when the player claims the plot\n*Required Settings*\nStat To Track : Events\nTarget Value: 1"
-    @editable{ToolTip := TT_PM_ClaimPlotTracker} ClaimPlotTracker : tracker_device = tracker_device{}
+    @editable ClaimPlotTracker : tracker_device = tracker_device{}
 
     TT_PM_ScoreManager<localizes>:message = "A score manager device that is used to display a player\'s currency amount on the game\'s score leaderboard\n*Required Settings*\nScore Award Type : Set"
-    @editable{ToolTip := TT_PM_ScoreManager} ScoreManager : score_manager_device = score_manager_device{}
+    @editable ScoreManager : score_manager_device = score_manager_device{}
 
     #Extra settings
     TT_PM_ResetOnPlayerLeave<localizes>:message = "If enabled, the plot will be reset when the player leaves the game\nFor co-op, if all players leave the plot, then the plot resets."
-    @editable{ToolTip := TT_PM_ResetOnPlayerLeave} ResetOnPlayerLeave : logic = false
+    @editable ResetOnPlayerLeave : logic = false
 
     # Coop
     TT_PM_CoopTycoonSettings<localizes>:message = "Settings to create a co-op tycoon instead of a solo one.\nIf you do not want a co-op tycoon, make sure the button says \"Set To Value\""
-    @editable{ToolTip := TT_PM_CoopTycoonSettings} CoopTycoonSettings : ?CooperativeSetting = false
+    @editable CoopTycoonSettings : ?CooperativeSetting = false
 
     TT_RBM_Device_AddedPlayerTrigger<localizes>:message = "A trigger device that get triggered when a player is added to the plot"
-    @editable{ToolTip := TT_RBM_Device_AddedPlayerTrigger} PlayerAddedToPlotTrigger : trigger_device = trigger_device{}
+    @editable PlayerAddedToPlotTrigger : trigger_device = trigger_device{}
 
     TT_PM_PlotLoadSettings<localizes>:message = "Settings to control how the plot is loaded when the player has played before"
-    @editable{ToolTip := TT_PM_PlotLoadSettings} PlotLoadSettings : PlotLoadSetting = PlotLoadSetting{}
+    @editable PlotLoadSettings : PlotLoadSetting = PlotLoadSetting{}
 
     #ATMs
     TT_PM_ATMs<localizes>:message = "The ATMs that are associated with this plot"
-    @editable{ToolTip := TT_PM_ATMs} ATMs : []ATM = array{}
+    @editable ATMs : []ATM = array{}
 
     #Background image for Plot Load UI
     #=================================================================================================================================
@@ -623,25 +587,25 @@ CooperativeSetting := class<concrete>():
     var PlotManager : Plot_Manager = Plot_Manager{}
 
     TT_CS_Enable<localizes>:message = "Enables the co-op tycoon features"
-    @editable{ToolTip := TT_CS_Enable} EnableCoopTycoon : logic = true
+    @editable EnableCoopTycoon : logic = true
 
     TT_CS_JoinPlotDev<localizes>:message = "The devices that the player will activate to join the plot"
-    @editable{ToolTip := TT_CS_JoinPlotDev} JoinPlotDevices : ActivateDevice = ActivateDevice{}
+    @editable JoinPlotDevices : ActivateDevice = ActivateDevice{}
 
     TT_CS_PlotJoinUI<localizes>:message = "The UI settings for the Plot Join UI"
-    @editable{ToolTip := TT_CS_PlotJoinUI} JoinPlotUISettings : JoinPlotUISetting = JoinPlotUISetting{}
+    @editable JoinPlotUISettings : JoinPlotUISetting = JoinPlotUISetting{}
 
     TT_CS_DisablePlotTrig<localizes>:message = "Trigger to disable and enable the Plot Joining Trigger"
-    @editable{ToolTip := TT_CS_DisablePlotTrig} DisablePlotJoiningTrigger : trigger_device = trigger_device{}
+    @editable DisablePlotJoiningTrigger : trigger_device = trigger_device{}
 
     TT_CS_Max<localizes>:message = "The max amount of players that a co-op tycoon can have"
-    @editable{ToolTip := TT_CS_Max} MaxAmountOfPlayers : int = 2
+    @editable MaxAmountOfPlayers : int = 2
 
     TT_CS_CollectionType<localizes>:message = "The type of resource collection for the co-op players\nSharedResources: All players have the same resource amount pool\nDifferentResources: Each player has their own resource amount"
-    @editable{ToolTip := TT_CS_CollectionType} CoopResourceCollectionType : CooperativeCollectionType = CooperativeCollectionType.SharedResources
+    @editable CoopResourceCollectionType : CooperativeCollectionType = CooperativeCollectionType.SharedResources
     
     TT_CS_PlotFull<localizes>:message = "The HUD that pops up when the Plot is full"
-    @editable{ToolTip := TT_CS_PlotFull} PlotIsFullHUD : hud_message_device = hud_message_device{}
+    @editable PlotIsFullHUD : hud_message_device = hud_message_device{}
 
 
     JoinPlotTrigger(MAgent : ?agent) : void =
@@ -695,13 +659,13 @@ JoinPlotUISetting := class<concrete>():
     TT_CS_ButtonType<localizes>:message = "The type of button for both the Accept and Cancel"
     TT_CS_DisplayText<localizes>:message = "The display text that appears when joining a plot."
     
-    @editable{ToolTip := TT_CS_CancelB} CancelButtonPosition : CanvasPosition = CanvasPosition{}
-    @editable{ToolTip := TT_CS_AcceptB} AcceptButtonPosition : CanvasPosition = CanvasPosition{}
-    @editable{ToolTip := TT_CS_BgPos} BackgroundPosition : CanvasPosition = CanvasPosition{}
-    @editable{ToolTip := TT_CS_DTPos} DisplayTextPosition : CanvasPosition = CanvasPosition{}
-    @editable{ToolTip := TT_CS_DTSet} DisplayTextSettings : TextSetting = TextSetting{}
-    @editable{ToolTip := TT_CS_ButtonType} ButtonType : UIButtonType = UIButtonType.Loud
-    @editable{ToolTip := TT_CS_DisplayText} DisplayText : string = "You already have a plot saved!\nIf you join this plot, you will loose your last plot's progress.\nDo you want to continue?"
+    @editable CancelButtonPosition : CanvasPosition = CanvasPosition{}
+    @editable AcceptButtonPosition : CanvasPosition = CanvasPosition{}
+    @editable BackgroundPosition : CanvasPosition = CanvasPosition{}
+    @editable DisplayTextPosition : CanvasPosition = CanvasPosition{}
+    @editable DisplayTextSettings : TextSetting = TextSetting{}
+    @editable ButtonType : UIButtonType = UIButtonType.Loud
+    @editable DisplayText : string = "You already have a plot saved!\nIf you join this plot, you will loose your last plot's progress.\nDo you want to continue?"
 
 #Types of coop resource collection
 CooperativeCollectionType := enum:

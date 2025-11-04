@@ -1,39 +1,3 @@
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -100,19 +64,19 @@ Game_Manager := class(creative_device):
     #Base Stuff
     PersistenceManager : Tycoon_Persistence_Manager = Tycoon_Persistence_Manager{}    
     TT_BaseClassSelector<localizes>:message = "Default class selector used to assign players to the default team\n*Required Settings*\n Team To Switch To : Team Index =  n+1 (where n is the total number of plots in your game)"
-    @editable{ToolTip := TT_BaseClassSelector} BaseClassSelector : class_and_team_selector_device = class_and_team_selector_device{}  
+    @editable BaseClassSelector : class_and_team_selector_device = class_and_team_selector_device{}  
        
     #Music Stuff
     TT_ToggleMusicToggleMusicTrigger<localizes>:message = "Trigger used to toggle the music on and off for the player"
-    @editable{ToolTip := TT_ToggleMusicToggleMusicTrigger} ToggleMusicTrigger : trigger_device = trigger_device{}
+    @editable ToggleMusicTrigger : trigger_device = trigger_device{}
 
     TT_MusicPlayer<localizes>:message = "Audio player used to play music for the player\n*Required Settings*\nCan Be Heard By : Instigator Only\nPlay Location : Instigating Player"
-    @editable{ToolTip := TT_MusicPlayer} MusicPlayer : audio_player_device = audio_player_device{}
+    @editable MusicPlayer : audio_player_device = audio_player_device{}
 
 
     #Extra Settings
     TT_MatchmakingSettings<localizes>:message = "Controls what happens to match making when the game starts"
-    @editable{ToolTip := TT_MatchmakingSettings} MatchmakingSettings : MatchmakingSetting = MatchmakingSetting{}
+    @editable MatchmakingSettings : MatchmakingSetting = MatchmakingSetting{}
 
 
 

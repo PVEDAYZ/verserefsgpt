@@ -1,39 +1,3 @@
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -51,18 +15,18 @@ Converter := class<concrete>():
     
     #Trigger used to activate converter
     TT_Convertor_ConverterTrigger<localizes>:message = "A trigger device that converts resources"
-    @editable{ToolTip := TT_Convertor_ConverterTrigger} ConverterTrigger : trigger_device = trigger_device{}               
+    @editable ConverterTrigger : trigger_device = trigger_device{}               
 
     #Amount of resources that are spent and gained per conversion
     TT_Convertor_CostResources<localizes>:message = "The resources that are spent per conversion"
-    @editable{ToolTip := TT_Convertor_CostResources} CostResources : []SpendableResource = array{}                             
+    @editable CostResources : []SpendableResource = array{}                             
     
     TT_Convertor_GainResources<localizes>:message = "The resources that are gained per conversion"
-    @editable{ToolTip := TT_Convertor_GainResources} GainResources : []GainableResource = array{}                             
+    @editable GainResources : []GainableResource = array{}                             
 
     #Settings to control different converter options
     TT_Convertor_ConverterSettings<localizes>:message = "Settings to control different converter options"
-    @editable{ToolTip := TT_Convertor_ConverterSettings} ConverterSettings : ConverterSetting = ConverterSetting{}
+    @editable ConverterSettings : ConverterSetting = ConverterSetting{}
   
 
     #Function that gets the element with the lowest amount in an array
@@ -139,25 +103,25 @@ Converter := class<concrete>():
 Convert_Manager := class(creative_device):
 
     TT_CVM_GameManager<localizes>:message = "Your Game Manager device"
-    @editable{ToolTip := TT_CVM_GameManager} GameManager : Game_Manager = Game_Manager{}     
+    @editable GameManager : Game_Manager = Game_Manager{}     
     
     TT_CVM_ResourceManager<localizes>:message = "Your Resource Manager device"
-    @editable{ToolTip := TT_CVM_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
     
     #Base Devices
     TT_CVM_FailureHUD<localizes>:message = "The hud message device that displays a message when a conversion fails\n*Required Settings*\nMessage recipient : Triggering Player"
-    @editable{ToolTip := TT_CVM_FailureHUD} FailureHUD : hud_message_device = hud_message_device{}    
+    @editable FailureHUD : hud_message_device = hud_message_device{}    
     
 
     TT_CVM_SuccessHUD<localizes>:message = "The hud message device that displays a message when a conversion is successful\n*Required Settings*\nMessage recipient : Triggering Player"
-    @editable{ToolTip := TT_CVM_SuccessHUD} SuccessHUD : hud_message_device = hud_message_device{}
+    @editable SuccessHUD : hud_message_device = hud_message_device{}
 
     TT_CVM_ConvertXP<localizes>:message = "The accolades device that awards xp when a conversion is successful\n*Required Settings*\nTriggering Player Only : True"
-    @editable{ToolTip := TT_CVM_ConvertXP} ConvertXP : accolades_device = accolades_device{}   
+    @editable ConvertXP : accolades_device = accolades_device{}   
     
     #All converters
     TT_CVM_Converters<localizes>:message = "Array of converters that are used to convert resources"
-    @editable{ToolTip := TT_CVM_Converters} Converters : []Converter = array{}   
+    @editable Converters : []Converter = array{}   
 
 
     OnBegin<override>()<suspends>:void=
@@ -185,7 +149,7 @@ Convert_Manager := class(creative_device):
 #Different settings for each converter
 ConverterSetting := class<concrete>():
     TT_Convertor_ConverterSetting_ConvertOptions<localizes>:message = "The options for the converter"
-    @editable{ToolTip := TT_Convertor_ConverterSetting_ConvertOptions} ConvertOptions : []ConvertOption = array{}
+    @editable ConvertOptions : []ConvertOption = array{}
 
     UnselectAllPre(Agent:?agent) : void=
         UnselectAll()
@@ -198,16 +162,16 @@ ConverterSetting := class<concrete>():
 #Option/Multiplier for the converter
 ConvertOption := class<concrete>():
     TT_Convertor_ConvertOption_ConvertAll<localizes>:message = "If enabled, will convert all the resources for as many times as possible"
-    @editable{ToolTip := TT_Convertor_ConvertOption_ConvertAll} ConvertAll : logic = false
+    @editable ConvertAll : logic = false
     
     TT_Convertor_ConvertOption_Trigger<localizes>:message = "The trigger device that is used to select the option"
-    @editable{ToolTip := TT_Convertor_ConvertOption_Trigger} Trigger : trigger_device = trigger_device{}
+    @editable Trigger : trigger_device = trigger_device{}
     
     TT_Convertor_ConvertOption_ConvertMultiplier<localizes>:message = "The multiplier for the converter"
     @editable ConvertMultiplier : float = 0.0
     
     TT_Convertor_ConvertOption_Prop<localizes>:message = "The prop that is shown if this option is selected"
-    @editable{ToolTip := TT_Convertor_ConvertOption_Prop} Prop : creative_prop = creative_prop{}
+    @editable Prop : creative_prop = creative_prop{}
 
     var Selected : logic = false
 

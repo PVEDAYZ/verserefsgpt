@@ -1,41 +1,3 @@
-
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -48,24 +10,24 @@ AFK_Manager := class(creative_device):
     @editable GameManager : Game_Manager = Game_Manager{}  
 
     TT_AFK_ResourceManager<localizes>:message = "Your Resource Manager Device"
-    @editable{ToolTip := TT_AFK_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
 
     var LeftEvent : event(agent) = event(agent){}
     
     
     #Devices
     TT_AFK_AFKCin<localizes>:message = "The cinematic sequence device that plays when a player enters the zone\n*Required Settings*\nVisibility: Instigator Only"
-    @editable{ToolTip := TT_AFK_AFKCin} AFKCin : cinematic_sequence_device = cinematic_sequence_device{}
+    @editable AFKCin : cinematic_sequence_device = cinematic_sequence_device{}
 
     TT_AFK_AFKMutator<localizes>:message = "The mutator zone device that detects when the player enters the AFK zone"
-    @editable{ToolTip := TT_AFK_AFKMutator} AFKMutator : mutator_zone_device = mutator_zone_device{}   
+    @editable AFKMutator : mutator_zone_device = mutator_zone_device{}   
 
     TT_AFK_AFKHUD<localizes>:message = "The hud message device that displays a message when the player is in the AFK zone\n*Required Settings*\nMessage Ricipient : Triggering Player"
-    @editable{ToolTip := TT_AFK_AFKHUD} AFKHUD : hud_message_device = hud_message_device{}     
+    @editable AFKHUD : hud_message_device = hud_message_device{}     
 
     #Settings
     TT_AFK_AFKCollectionSettings<localizes>:message = "The settings for the resources collected when the player is in the AFK zone"
-    @editable{ToolTip := TT_AFK_AFKCollectionSettings} AFKCollectionSettings : AFKCollectionSetting = AFKCollectionSetting{}
+    @editable AFKCollectionSettings : AFKCollectionSetting = AFKCollectionSetting{}
 
     
     
@@ -149,22 +111,22 @@ AFK_Manager := class(creative_device):
 #Settings that control what/how resources are collected
 AFKCollectionSetting:= class<concrete>():
     TT_AFK_AFKCollectionSetting_RequiresDance<localizes>:message = "If enabled, the player must be dancing to collect resources"
-    @editable{ToolTip := TT_AFK_AFKCollectionSetting_RequiresDance} RequiresDance : logic = false
+    @editable RequiresDance : logic = false
 
     TT_AFK_AFKCollectionSetting_CollectionResources<localizes>:message = "The resources that are collected when the player is in the AFK zone"
-    @editable{ToolTip := TT_AFK_AFKCollectionSetting_CollectionResources} CollectionResources : []AFKResource = array{}
+    @editable CollectionResources : []AFKResource = array{}
     @editable CollectionTime : float = 0.0
 
 #Resource that is collected
 AFKResource := class<concrete>(BaseResource):
     TT_AFK_AFKResource_CollectionType<localizes>:message = "How the resource is collected (Boost or fixed amount)"
-    @editable{ToolTip := TT_AFK_AFKResource_CollectionType} CollectionType : AFKCollectionType = AFKCollectionType.ResourceBoost
+    @editable CollectionType : AFKCollectionType = AFKCollectionType.ResourceBoost
 
     TT_AFK_AFKResource_Amount<localizes>:message = "The amount of the resource that is collected *Only works if collection type is set to ResourceCollect"
-    @editable{ToolTip := TT_AFK_AFKResource_Amount} Amount : float = 0.0
+    @editable Amount : float = 0.0
 
     TT_AFK_AFKResource_CollectIdleAmountInstead<localizes>:message = "If enabled, 'Amount' will be added to player\'s idle amount instead of total resource amount"
-    @editable{ToolTip := TT_AFK_AFKResource_CollectIdleAmountInstead} CollectIdleAmountInstead : logic = false
+    @editable CollectIdleAmountInstead : logic = false
     
 #Different collection types
 AFKCollectionType := enum:

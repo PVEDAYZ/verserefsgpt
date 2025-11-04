@@ -53,16 +53,16 @@ using { /Fortnite.com/Devices/CreativeAnimation/InterpolationTypes }
 #Different devices that are used to activate a button
 ActivateDevice := class<concrete>():
     TT_AD_ActivateMutatorZone<localizes>:message = "A mutator zone device that activates a tycoon button\n*Required Settings*\nActivating Team : The team which this button\'s plot is for (for Plot Claim buttons, it should be n+1, where n is the total number of plots in your game)\nVisible In Game : false"
-    @editable{ToolTip := TT_AD_ActivateMutatorZone} ActivateMutatorZone: mutator_zone_device = mutator_zone_device{}
+    @editable ActivateMutatorZone: mutator_zone_device = mutator_zone_device{}
     
     TT_AD_ActivateTrigger<localizes>:message = "A trigger device that activates a tycoon button\n*Required Settings*\nActivating Team : The team which this button\'s plot is for (for Plot Claim buttons, it should be n+1, where n is the total number of plots in your game)\nVisible In Game : false"
-    @editable{ToolTip := TT_AD_ActivateTrigger} ActivateTrigger: trigger_device = trigger_device{}  
+    @editable ActivateTrigger: trigger_device = trigger_device{}  
 
     TT_AD_ActivateButton<localizes>:message = "A button device that activates a tycoon button\n*Required Settings*\nActivating Team : The team which this button\'s plot is for (for Plot Claim buttons, it should be n+1, where n is the total number of plots in your game)\nVisible In Game : false"
-    @editable{ToolTip := TT_AD_ActivateButton} ActivateButton: button_device = button_device{}  
+    @editable ActivateButton: button_device = button_device{}  
 
     TT_AD_ActivateVolume<localizes>:message = "A volume device that activates a tycoon button\n*Required Settings*\nActivating Team : The team which this button\'s plot is for (for Plot Claim buttons, it should be n+1, where n is the total number of plots in your game)\nVisible In Game : false\nMust be parented to corresponding button prop blueprint"
-    @editable{ToolTip := TT_AD_ActivateVolume} ActivateVolume : volume_device = volume_device{}
+    @editable ActivateVolume : volume_device = volume_device{}
 
     DisableAll()<suspends> : void=
         ActivateMutatorZone.Disable()

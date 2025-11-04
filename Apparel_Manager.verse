@@ -301,8 +301,8 @@ ApparelUI := class():
                 for(App : AllApparel):
                     if(App.IDX = EquipNum): 
                         HandleImageChange(App, 1)
-                        for(V : App.VFXs):
-                            V.Pickup(Player)
+                        # for(V : App.VFXs):
+                            # V.Pickup(Player)
                             App.GiveBonuses(Player)
                         PersistanceManager.ReplacePlayerArrStat(Player, StatType.EquippedApparels, ?ReplaceInt := 0, ?Score := App.IDX)
 
@@ -310,8 +310,8 @@ ApparelUI := class():
                 for(App : AllApparel):
                     if(App.IDX = EquipNum):
                         HandleImageChange(App, 2)
-                        for(V : App.VFXs):
-                            V.Pickup(Player)
+                        # for(V : App.VFXs):
+                            # V.Pickup(Player)
                             App.GiveBonuses(Player)
         
                         PersistanceManager.ReplacePlayerArrStat(Player, StatType.EquippedApparels, ?ReplaceInt := 1, ?Score := App.IDX)
@@ -320,8 +320,8 @@ ApparelUI := class():
                 for(App : AllApparel):
                     if(App.IDX = EquipNum):
                         HandleImageChange(App, 3)
-                        for(V : App.VFXs):
-                            V.Pickup(Player)
+                        # for(V : App.VFXs):
+                            # V.Pickup(Player)
                             App.GiveBonuses(Player)
                         PersistanceManager.ReplacePlayerArrStat(Player, StatType.EquippedApparels, ?ReplaceInt := 2, ?Score := App.IDX)
 
@@ -337,41 +337,41 @@ Apparel_Manager := class(creative_device):
     #Devices
     PersistanceManager : Tycoon_Persistence_Manager = Tycoon_Persistence_Manager{}
     TT_APM_Device_GameManager<localizes>:message = "Your Game Manager Device"
-    @editable{ToolTip := TT_APM_Device_GameManager} GameManager : Game_Manager = Game_Manager{}     
+    @editable GameManager : Game_Manager = Game_Manager{}     
 
     TT_APM_Device_ResourceManager<localizes>:message = "Your Resource Manager Device"
-    @editable{ToolTip := TT_APM_Device_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
     
     TT_APM_Device_PurchaseXP<localizes>:message = "The accolades device which is used to award the player xp for purchasing an apparel"
-    @editable{ToolTip := TT_APM_Device_PurchaseXP} PurchaseXP : accolades_device = accolades_device{}
+    @editable PurchaseXP : accolades_device = accolades_device{}
 
     TT_APM_Device_PurchaseSuccessSound<localizes>:message = "An audio player device which plays a sound when a player purchases an apparel\n*Required Settings*\n Can be heard by : Instigator Only\n Play Location : Instigating Player"
-    @editable{ToolTip := TT_APM_Device_PurchaseSuccessSound} PurchaseSuccessSound : audio_player_device = audio_player_device{}
+    @editable PurchaseSuccessSound : audio_player_device = audio_player_device{}
 
     TT_APM_Device_PurchaseFailureSound<localizes>:message = "An audio player device which plays a sound when a player fails to purchase an apparel\n*Required Settings*\n Can be heard by : Instigator Only\n Play Location : Instigating Player"
-    @editable{ToolTip := TT_APM_Device_PurchaseFailureSound} PurchaseFailureSound : audio_player_device = audio_player_device{}
+    @editable PurchaseFailureSound : audio_player_device = audio_player_device{}
 
     TT_APM_Device_PurchaseFailMSG<localizes>:message = "A hud message device which displays a message when a player fails to purchase an apparel\n*Required Settings*\nMessage Recipient : Triggering Player"
-    @editable{ToolTip := TT_APM_Device_PurchaseFailMSG} PurchaseFailMSG : hud_message_device = hud_message_device{}     
+    @editable PurchaseFailMSG : hud_message_device = hud_message_device{}     
     
     TT_APM_Device_AlreadyHaveMSG<localizes>:message = "A hud message device which displays a message when a player already has an apparel\n*Required Settings*\nMessage Recipient : Triggering Player"
-    @editable{ToolTip := TT_APM_Device_AlreadyHaveMSG} AlreadyHaveMSG : hud_message_device = hud_message_device{}  
+    @editable AlreadyHaveMSG : hud_message_device = hud_message_device{}  
     
     TT_APM_Device_SuccessMSG<localizes>:message = "A hud message device which displays a message when a player successfully purchases an apparel\n*Required Settings*\nMessage Recipient : Triggering Player"
-    @editable{ToolTip := TT_APM_Device_SuccessMSG} SuccessMSG : hud_message_device = hud_message_device{}       
+    @editable SuccessMSG : hud_message_device = hud_message_device{}       
 
     #Settings
     TT_APM_Device_AllApparel<localizes>:message = "An array of all the apparels that can be purchased"
-    @editable{ToolTip := TT_APM_Device_AllApparel} AllApparel : []ApparelBuyable = array{}
+    @editable AllApparel : []ApparelBuyable = array{}
 
     TT_APM_Device_AdditionalEquipSettings<localizes>:message = "The settings for the additional apparel equip menu"
-    @editable{ToolTip := TT_APM_Device_AdditionalEquipSettings} AdditionalEquipSettings : ApparelEquipSetting = ApparelEquipSetting{}
+    @editable AdditionalEquipSettings : ApparelEquipSetting = ApparelEquipSetting{}
 
     TT_APM_Device_ShopSettings<localizes>:message = "The settings for the apparel shop"
-    @editable{ToolTip := TT_APM_Device_ShopSettings} ShopSettings : ShopSetting = ShopSetting{}
+    @editable ShopSettings : ShopSetting = ShopSetting{}
 
     TT_RBM_Device_AddedPlayerTrigger<localizes>:message = "A trigger device that get triggered when a player is added to the plot"
-    @editable{ToolTip := TT_RBM_Device_AddedPlayerTrigger} PlayerAddedToPlotTrigger : trigger_device = trigger_device{}
+    @editable PlayerAddedToPlotTrigger : trigger_device = trigger_device{}
 
     #Map of all players info
     var PlayersApparelMap : [player]PlayerApparel = map{}      
@@ -485,20 +485,20 @@ Apparel_Manager := class(creative_device):
             if(EquipNum := CP.EquippedApparels[0]):
                 for(App : AllApparel):
                     if(App.IDX = EquipNum): 
-                        for(V : App.VFXs):
-                            V.Pickup(Agent)
+                        # for(V : App.VFXs):
+                            # V.Pickup(Agent)
                         App.GiveBonuses(Agent)
             if(EquipNum := CP.EquippedApparels[1]):
                 for(App : AllApparel):
                     if(App.IDX = EquipNum):
-                        for(V : App.VFXs):
-                            V.Pickup(Agent)
+                        # for(V : App.VFXs):
+                            # V.Pickup(Agent)
                         App.GiveBonuses(Agent)
             if(EquipNum := CP.EquippedApparels[2]):
                 for(App : AllApparel):
                     if(App.IDX = EquipNum):
-                        for(V : App.VFXs):
-                            V.Pickup(Agent)
+                        # for(V : App.VFXs):
+                            # V.Pickup(Agent)
                         App.GiveBonuses(Agent)
 
     #Initializes pets for a player
@@ -544,7 +544,7 @@ Apparel_Manager := class(creative_device):
                 UnEquippedTrigger := A.UnEquippedTrigger
                 IsEquipped := false
                 BodySlot := A.BodySlot
-                VFXs := A.VFXs
+                # VFXs := A.VFXs
                 Position1Trigger := A.Position1Trigger
                 Position2Trigger := A.Position2Trigger
                 Position3Trigger := A.Position3Trigger
@@ -558,10 +558,10 @@ ApparelBuyable := class<concrete>(Buyable):
     var ApparelManager : Apparel_Manager = Apparel_Manager{}
     #Body slot and VFXs
     TT_APM_ApparelBuyable_BodySlot<localizes>:message = "The body slot that this apparel is equipped to. Used for the custom Equip UI"
-    @editable{ToolTip := TT_APM_ApparelBuyable_BodySlot} BodySlot : bodyslot = bodyslot.Slot1       
+    @editable BodySlot : bodyslot = bodyslot.Slot1       
     
     TT_APM_ApparelBuyable_VFXs<localizes>:message = "The VFX power up device that is used to display the apparel\'s VFX"
-    @editable{ToolTip := TT_APM_ApparelBuyable_VFXs} VFXs : []visual_effect_powerup_device = array{}                                
+    # @editable VFXs : []visual_effect_powerup_device = array{}                                
 
     #Clear triggers
     var Position1Trigger : trigger_device = trigger_device{}                                         
@@ -571,8 +571,8 @@ ApparelBuyable := class<concrete>(Buyable):
     #Equips this apparel
     EquipApparel(Agent:agent) : void=
         if(CP := Custom_Player[GameManager.PlayersMap[Agent]]):
-            for(V : VFXs):
-                V.Pickup(Agent)
+            # for(V : VFXs):
+                # V.Pickup(Agent)
             if(BodySlot = bodyslot.Slot1):
                 if(set CP.EquippedApparels[0] = IDX){}
                 if(PlayersApparel := ApparelManager.PlayersApparelMap[Agent], set PlayersApparel.Apparel[0] = IDX){}
@@ -613,18 +613,18 @@ ApparelBuyable := class<concrete>(Buyable):
 ApparelEquipSetting := class<concrete>():
     #Devices
     TT_APM_ApparelEquipSetting_OpenApparelTrigger<localizes>:message = "A trigger device which opens the apparel equip menu"
-    @editable{ToolTip := TT_APM_ApparelEquipSetting_OpenApparelTrigger} OpenApparelTrigger : trigger_device = trigger_device{}     
+    @editable OpenApparelTrigger : trigger_device = trigger_device{}     
     
     TT_APM_ApparelEquipSetting_ApparelCam<localizes>:message = "A gameplay camera device which is used to display the player when they open the apparel equip menu"
-    @editable{ToolTip := TT_APM_ApparelEquipSetting_ApparelCam} ApparelCam : gameplay_camera_fixed_point_device = gameplay_camera_fixed_point_device{}    
+    @editable ApparelCam : gameplay_camera_fixed_point_device = gameplay_camera_fixed_point_device{}    
     
     TT_APM_ApparelEquipSetting_ApparelTP<localizes>:message = "A teleporter device which teleports the player infront of where the camera is\n*Required Settings*\nTeleporter Group: None\nTeleporter Target Group: None"
-    @editable{ToolTip := TT_APM_ApparelEquipSetting_ApparelTP} ApparelTP : teleporter_device = teleporter_device{}      
+    @editable ApparelTP : teleporter_device = teleporter_device{}      
          
     TT_APM_PositionTrigger<localizes>:message = "Trigger Device used to clear vfxs\n*Required Settings*\nSet all VFXs in the corresponding position to clear from this trigger's triggered event"
-    @editable{ToolTip := TT_APM_PositionTrigger} Position1Trigger : trigger_device = trigger_device{}                                          
-    @editable{ToolTip := TT_APM_PositionTrigger} Position2Trigger : trigger_device = trigger_device{}                                         
-    @editable{ToolTip := TT_APM_PositionTrigger} Position3Trigger : trigger_device = trigger_device{}         
+    @editable Position1Trigger : trigger_device = trigger_device{}                                          
+    @editable Position2Trigger : trigger_device = trigger_device{}                                         
+    @editable Position3Trigger : trigger_device = trigger_device{}         
     
     #Settings
     @editable UIPositions : ApparelUIPositions = ApparelUIPositions{}

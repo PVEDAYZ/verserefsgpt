@@ -1,39 +1,3 @@
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -68,16 +32,16 @@ NPCSpawnerCollection :=class<concrete>():
     var NPCManager : NPC_Manager = NPC_Manager{}
     var TrackedButtons : []TrackedButton = array{}
     TT_NPC_SC_NPCSpawners<localizes>:message = "List of npc spawner devices that are used to spawn the NPCs"
-    @editable{ToolTip := TT_NPC_SC_NPCSpawners} NPCSpawners : []npc_spawner_device = array{}
+    @editable NPCSpawners : []npc_spawner_device = array{}
 
     TT_NPC_SC_EliminatedTrigger<localizes>:message = "A Trigger device that is activated when the NPC is eliminated"
-    @editable{ToolTip := TT_NPC_SC_EliminatedTrigger} EliminatedTrigger : trigger_device = trigger_device{}
+    @editable EliminatedTrigger : trigger_device = trigger_device{}
 
     TT_NPC_SC_InteractionSettings<localizes>:message = "The settings for the interaction functionality of the NPC"
-    @editable{ToolTip := TT_NPC_SC_InteractionSettings} InteractionSettings : InteractionSetting = InteractionSetting{}
+    @editable InteractionSettings : InteractionSetting = InteractionSetting{}
 
     TT_NPC_SC_AttachProp<localizes>:message = "The prop that is attached to the NPC (Optional - empty by default)"
-    @editable{ToolTip := TT_NPC_SC_AttachProp} AttachProp : ?creative_prop_asset = false
+    @editable AttachProp : ?creative_prop_asset = false
 
     #Initializes all spawners in collection
     Initialize() : void=
@@ -292,42 +256,42 @@ NPCSpawnerCollection :=class<concrete>():
 #Class for settings that control the Distance Tracking option
 RemainDistanceSetting := class<concrete>():
     TT_NPC_Interaction_RemainDistance<localizes>:message = "The range the player must remain within to gain resources after interacting with the NPC"
-    @editable{ToolTip := TT_NPC_Interaction_RemainDistance} RemainDistance : float = 0.0
+    @editable RemainDistance : float = 0.0
 
     TT_NPC_Interaction_RemainTime<localizes>:message = "The time the player must remain within the range to gain resources after interacting with the NPC"
-    @editable{ToolTip := TT_NPC_Interaction_RemainTime} RemainTime : float = 0.0
+    @editable RemainTime : float = 0.0
 
     TT_NPC_Interaction_ProgressBarPosition<localizes>:message = "The settings for player\'s interaction progress bar"
-    @editable{ToolTip := TT_NPC_Interaction_ProgressBarPosition} ProgressBarPosition : CanvasPosition = CanvasPosition{}
+    @editable ProgressBarPosition : CanvasPosition = CanvasPosition{}
     
     @editable BackgroundBarColor : color = color{}
     @editable ProgressBarColor : color = color{}
 
     TT_NPC_Interaction_CompletionTrigger<localizes>:message = "A trigger device that is activated if the player remains within the range for the required time"
-    @editable{ToolTip := TT_NPC_Interaction_CompletionTrigger} CompletionTrigger : trigger_device = trigger_device{}
+    @editable CompletionTrigger : trigger_device = trigger_device{}
 
     TT_NPC_Interaction_FailureTrigger<localizes>:message = "A trigger device that is activated if the player does not remain within the range for the required time"
-    @editable{ToolTip := TT_NPC_Interaction_FailureTrigger} FailureTrigger : trigger_device = trigger_device{}
+    @editable FailureTrigger : trigger_device = trigger_device{}
 
     TT_NPC_Interaction_CompletionResources<localizes>:message = "The resources that are awarded to the player if they remain within the range for the required time"
-    @editable{ToolTip := TT_NPC_Interaction_CompletionResources} CompletionResources : []GainableResource = array{}
+    @editable CompletionResources : []GainableResource = array{}
 
     TT_NPC_Interaction_NPCPopUpSettings<localizes>:message = "The settings for the pop up animation that is displayed when resources are gained through interacting with the NPC"
-    @editable{ToolTip := TT_NPC_Interaction_NPCPopUpSettings} NPCPopUpSettings : PopUpAnimationSetting = PopUpAnimationSetting{}
+    @editable NPCPopUpSettings : PopUpAnimationSetting = PopUpAnimationSetting{}
 
     TT_NPC_Interaction_AddTexts<localizes>:message = "Texts that shown on screen while interacting with the NPC"
-    @editable{ToolTip := TT_NPC_Interaction_AddTexts} AddTexts : []CustomTextWidget = array{}
+    @editable AddTexts : []CustomTextWidget = array{}
 
     TT_NPC_Interaction_GracePeriodSettings<localizes>:message = "The settings for the grace period that allows the player to have a chance to get close to the NPC again after failing to remain within the range for the required time"
-    @editable{ToolTip := TT_NPC_Interaction_GracePeriodSettings} GracePeriodSettings : ?GracePeriodSetting = false
+    @editable GracePeriodSettings : ?GracePeriodSetting = false
 
 #Class for settings that control the Distance Tracking option
 GracePeriodSetting := class<concrete>():
      TT_NPC_Interaction_GracePeriodDuration<localizes>:message = "The duration of the grace period"
-    @editable{ToolTip := TT_NPC_Interaction_GracePeriodDuration} Duration : float = 0.0
+    @editable Duration : float = 0.0
 
     TT_NPC_Interaction_ShowReverseProgressBar<localizes>:message = "if enabled, the progress bar will decrease back to 0 instead of waiting for the specified duration to complete"
-    @editable{ToolTip := TT_NPC_Interaction_ShowReverseProgressBar} ShowReverseProgressBar : logic = false
+    @editable ShowReverseProgressBar : logic = false
 
     @editable AddTexts : []CustomGraceTextWidget = array{}
    
@@ -351,52 +315,52 @@ CustomTextWidget := class<concrete>():
 #Different settings used to control interaction functionalities
 InteractionSetting := class<concrete>():
     TT_NPC_Interaction_ActivateTrigger<localizes>:message = "A trigger device that is activated when the NPC is interacted with"
-    @editable{ToolTip := TT_NPC_Interaction_ActivateTrigger} ActivateTrigger : trigger_device = trigger_device{}
+    @editable ActivateTrigger : trigger_device = trigger_device{}
 
     TT_NPC_Interaction_InteractAudio<localizes>:message = "The audio that is played when the NPC is interacted with\n*Required Settings*\n Can be heard by : Instigator Only\n Play Location : Instigating Player"
-    @editable{ToolTip := TT_NPC_Interaction_InteractAudio} InteractAudio : audio_player_device = audio_player_device{}
+    @editable InteractAudio : audio_player_device = audio_player_device{}
 
     TT_NPC_Interaction_PauseSettings<localizes>:message = "The settings for the pause/stop moving functionality of the NPC"
-    @editable{ToolTip := TT_NPC_Interaction_PauseSettings} PauseSettings : PauseSetting = PauseSetting{}
+    @editable PauseSettings : PauseSetting = PauseSetting{}
 
     TT_NPC_Interaction_DelayBetweenPresses<localizes>:message = "A delay which does not allow the same player to interact with the NPC again until the delay is over"
-    @editable{ToolTip := TT_NPC_Interaction_DelayBetweenPresses} DelayBetweenPresses : ?NPCDelaySetting = false
+    @editable DelayBetweenPresses : ?NPCDelaySetting = false
 
     TT_NPC_Interaction_RemainDistanceSettings<localizes>:message = "The settings for the distance tracking functionality of the NPC"
-    @editable{ToolTip := TT_NPC_Interaction_RemainDistanceSettings} RemainDistanceSettings : ?RemainDistanceSetting = false
+    @editable RemainDistanceSettings : ?RemainDistanceSetting = false
 
 #Settings for the different delay options
 NPCDelaySetting := class<concrete>():
     TT_NPC_Interaction_Delay<localizes>:message = "The delay between each interaction with the NPC"
-    @editable{ToolTip := TT_NPC_Interaction_Delay} Delay : float = 0.0
+    @editable Delay : float = 0.0
 
     TT_NPC_Interaction_OnDelayHUD<localizes>:message = "A hud message device that is shown when the delay is active and the player cannot interact with the NPC\n*Required Settings*\nMessage Recipient : Triggering Player"
-    @editable{ToolTip := TT_NPC_Interaction_OnDelayHUD} OnDelayHUD : hud_message_device = hud_message_device{}
+    @editable OnDelayHUD : hud_message_device = hud_message_device{}
 
 #Settings for the different pause options
 PauseSetting := class<concrete>():
     TT_NPC_Interaction_DisableButtonDuringPause<localizes>:message = "Whether the button is disabled when the NPC is paused so other players cannot interact with it"
-    @editable{ToolTip := TT_NPC_Interaction_DisableButtonDuringPause} DisableButtonDuringPause : logic = false
+    @editable DisableButtonDuringPause : logic = false
 
     TT_NPC_Interaction_PauseDuration<localizes>:message = "The duration of the pause/stop moving functionality of the NPC"
-    @editable{ToolTip := TT_NPC_Interaction_PauseDuration} PauseDuration : ?float = false
+    @editable PauseDuration : ?float = false
 
     TT_NPC_Interaction_UnpauseTrigger<localizes>:message = "A trigger device that unpauses the NPC when activated"
-    @editable{ToolTip := TT_NPC_Interaction_UnpauseTrigger} UnpauseTrigger : ?trigger_device = false
+    @editable UnpauseTrigger : ?trigger_device = false
 
 #Main creative device class
 NPC_Manager := class(creative_device):
     TT_NPC_Device_GameManager<localizes>:message = "Your Game manager device"
-    @editable{ToolTip := TT_NPC_Device_GameManager} GameManager : Game_Manager = Game_Manager{}
+    @editable GameManager : Game_Manager = Game_Manager{}
 
     TT_NPC_Device_ResourceManager<localizes>:message = "Your Resource manager device"
-    @editable{ToolTip := TT_NPC_Device_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
 
     TT_NPC_Device_NPCCollections<localizes>:message = "List of NPC collections that are used to spawn the NPCs"
-    @editable{ToolTip := TT_NPC_Device_NPCCollections} NPCCollections : []NPCSpawnerCollection = array{}
+    @editable NPCCollections : []NPCSpawnerCollection = array{}
 
     TT_NPC_Device_TrackedButtons<localizes>:message = "List of tracked buttons that are used to track the NPCs"
-    @editable{ToolTip := TT_NPC_Device_TrackedButtons} TrackedButtons : []TrackedButton = array{}
+    @editable TrackedButtons : []TrackedButton = array{}
     var NPCButtonMap : [agent]TrackedButton = map{}
 
     #Initializes all NPC collections
@@ -417,10 +381,10 @@ MovementTypes := enum:
 #NPC Behavior applied to NPCs to have them randomly move between different set locations
 InteractableNPCBehavior := class(npc_behavior):
     TT_NPC_Behavior_MoveLocations<localizes>:message = "List of props that are used to control the NPC\'s movement path"
-    @editable{ToolTip := TT_NPC_Behavior_MoveLocations} MoveLocations : []creative_prop = array{}
+    @editable MoveLocations : []creative_prop = array{}
 
     TT_NPC_Behavior_MovementType<localizes>:message = "The movement type of the NPC\nWalking : Moves between the set locations at a walking pace\nRunning : Moves between the set locations at a running pace\nIntervalRandom : Randomly moves between walking and running"
-    @editable{ToolTip := TT_NPC_Behavior_MovementType} NPCMovementType : MovementTypes = MovementTypes.Walking
+    @editable NPCMovementType : MovementTypes = MovementTypes.Walking
     EliminatedEvent : event() = event(){}
     
     #Gets NPC values and finds the set location that most closely corresponds with its spawn location

@@ -1,40 +1,3 @@
-
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -195,29 +158,29 @@ Rebirth_Manager := class(creative_device):
     #Base Stuff
     PersistanceManager : Tycoon_Persistence_Manager = Tycoon_Persistence_Manager{}
     TT_RBM_Device_GameManager<localizes>:message = "Your Game Manager"
-    @editable{ToolTip := TT_RBM_Device_GameManager} GameManager : Game_Manager = Game_Manager{}   
+    @editable GameManager : Game_Manager = Game_Manager{}   
     
     TT_RBM_Device_ResourceManager<localizes>:message = "Your Resource Manager device"
-    @editable{ToolTip := TT_RBM_Device_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
 
     TT_RBM_Device_ButtonManager<localizes>:message = "Your Button Manager"
-    @editable{ToolTip := TT_RBM_Device_ButtonManager} ButtonManager : Button_Manager = Button_Manager{}
+    @editable ButtonManager : Button_Manager = Button_Manager{}
 
     TT_RBM_Device_PlotManager<localizes>:message = "Your Plot Manager"
-    @editable{ToolTip := TT_RBM_Device_PlotManager} PlotManager : Plot_Manager = Plot_Manager{}       
+    @editable PlotManager : Plot_Manager = Plot_Manager{}       
 
     #Devices
     TT_RBM_Device_BaseClassSelector<localizes>:message = "A class and team selector device that resets the player\'s team after rebirth"
-    @editable{ToolTip := TT_RBM_Device_BaseClassSelector} BaseClassSelector : class_and_team_selector_device = class_and_team_selector_device{}
+    @editable BaseClassSelector : class_and_team_selector_device = class_and_team_selector_device{}
     
     TT_RBM_Device_RebirthPlayerTrigger<localizes>:message = "A trigger device that rebirths the player when triggered"
-    @editable{ToolTip := TT_RBM_Device_RebirthPlayerTrigger} RebirthPlayerTrigger : trigger_device = trigger_device{} 
+    @editable RebirthPlayerTrigger : trigger_device = trigger_device{} 
 
     TT_RBM_Device_RebirthedTrigger<localizes>:message = "A trigger device that get triggered when the player rebirths"
-    @editable{ToolTip := TT_RBM_Device_RebirthedTrigger} RebirthedTrigger : trigger_device = trigger_device{}
+    @editable RebirthedTrigger : trigger_device = trigger_device{}
 
     TT_RBM_Device_AddedPlayerTrigger<localizes>:message = "A trigger device that get triggered when a player is added to the plot"
-    @editable{ToolTip := TT_RBM_Device_AddedPlayerTrigger} PlayerAddedToPlotTrigger : trigger_device = trigger_device{}
+    @editable PlayerAddedToPlotTrigger : trigger_device = trigger_device{}
 
     #Extra Settings
     @editable RebirthSettings : RebirthSetting = RebirthSetting{}
@@ -404,33 +367,33 @@ RebirthPlayerUISetting := class<concrete>():
 #Overall settings that hold other settings
 RebirthSetting := class<concrete>():
     TT_RBM_Device_RebirthSetting_ChoiceSetting<localizes>:message = "How the player can rebirth\nAuto: player automatically rebirths after 'RebirthPlayerTrigger' is triggered\nOptional : a UI is shown and the player has to confirm"
-    @editable{ToolTip := TT_RBM_Device_RebirthSetting_ChoiceSetting} ChoiceSetting : ChoiceType = ChoiceType.Optional
+    @editable ChoiceSetting : ChoiceType = ChoiceType.Optional
     
     TT_RBM_Device_RebirthSetting_RebirthChoiceUISettings<localizes>:message = "The settings that control the UI when the player rebirths"
-    @editable{ToolTip := TT_RBM_Device_RebirthSetting_RebirthChoiceUISettings} RebirthChoiceUISettings : RebirthChoiceUISetting = RebirthChoiceUISetting{}
+    @editable RebirthChoiceUISettings : RebirthChoiceUISetting = RebirthChoiceUISetting{}
     
     TT_RBM_Device_RebirthSetting_RebirthPlayerUISettings<localizes>:message = "The settings that control the UI that displays the rebirth resource amount"
-    @editable{ToolTip := TT_RBM_Device_RebirthSetting_RebirthPlayerUISettings} RebirthPlayerUISettings : RebirthPlayerUISetting = RebirthPlayerUISetting{}
+    @editable RebirthPlayerUISettings : RebirthPlayerUISetting = RebirthPlayerUISetting{}
     
     TT_RBM_Device_RebirthSetting_ResourceSettings<localizes>:message = "The settings that controls how the rebirth resource is displayed"
-    @editable{ToolTip := TT_RBM_Device_RebirthSetting_ResourceSettings} ResourceSettings : RebirthResource = RebirthResource{ResourceName := "Rebirth"}
+    @editable ResourceSettings : RebirthResource = RebirthResource{ResourceName := "Rebirth"}
     
     TT_RBM_Device_RebirthSetting_RebirthCollectionSettings<localizes>:message = "The settings that controls how rebirths are collected"
-    @editable{ToolTip := TT_RBM_Device_RebirthSetting_RebirthCollectionSettings} RebirthCollectionSettings : RebirthCollectionSetting = RebirthCollectionSetting{}
+    @editable RebirthCollectionSettings : RebirthCollectionSetting = RebirthCollectionSetting{}
 
 #Settings that control how rebirths are collected
 RebirthCollectionSetting:= class<concrete>():
     TT_RBM_Device_RebirthSetting_RebirthCollectionSetting_CollectionType<localizes>:message = "How the rebirth amount is collected\nSetAmount: the amount is set to a specific amount\nBasedAmount: the amount is based on the amount of a resource"
-    @editable{ToolTip := TT_RBM_Device_RebirthSetting_RebirthCollectionSetting_CollectionType} CollectionType : collectiontype = collectiontype.SetAmount
+    @editable CollectionType : collectiontype = collectiontype.SetAmount
 
     TT_RBM_Device_RebirthSetting_RebirthCollectionSetting_SetAmount<localizes>:message = "The fixed amount of rebirths that is collected\nOnly works if 'CollectionType' is 'SetAmount'"
-    @editable{ToolTip := TT_RBM_Device_RebirthSetting_RebirthCollectionSetting_SetAmount} SetAmount : float = 0.0
+    @editable SetAmount : float = 0.0
 
     TT_RBM_Device_RebirthSetting_RebirthCollectionSetting_BasedResource<localizes>:message = "The resource that is used to calculate the rebirth amount\nOnly works if 'CollectionType' is 'BasedAmount'"
-    @editable{ToolTip := TT_RBM_Device_RebirthSetting_RebirthCollectionSetting_BasedResource} BasedResource : BaseResource = BaseResource{}
+    @editable BasedResource : BaseResource = BaseResource{}
 
     TT_RBM_Device_RebirthSetting_RebirthCollectionSetting_BasedAmountPerRebirth<localizes>:message = "The amount of the 'BasedResource' that is needed to collect 1 rebirth\nOnly works if 'CollectionType' is 'BasedAmount'"
-    @editable{ToolTip := TT_RBM_Device_RebirthSetting_RebirthCollectionSetting_BasedAmountPerRebirth} BasedAmountPerRebirth : float = 0.0
+    @editable BasedAmountPerRebirth : float = 0.0
 
 #Different collection types
 collectiontype := enum:

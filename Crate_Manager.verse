@@ -1,40 +1,3 @@
-
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -53,10 +16,10 @@ using { /Fortnite.com/Devices/CreativeAnimation/InterpolationTypes }
 #A level that can be upgraded to in a crate
 CrateLevel:= class<concrete>():     
     TT_Crate_CrateLevel_CollectResources<localizes>:message = "The resources that are collected when the crate is hit"
-    @editable{ToolTip := TT_Crate_CrateLevel_CollectResources} CollectResources : []GainableResource = array{}
+    @editable CollectResources : []GainableResource = array{}
 
     TT_Crate_CrateLevel_Target<localizes>:message = "The target which the crate will be upgraded when reached"
-    @editable{ToolTip := TT_Crate_CrateLevel_Target} Target : int = 0
+    @editable Target : int = 0
 
 #A class for each crate
 Crate:= class<concrete>():
@@ -68,30 +31,30 @@ Crate:= class<concrete>():
 
     #Crate Level Stuff
     TT_Crate_Crate_CrateLevels<localizes>:message = "An array of crate levels"
-    @editable{ToolTip := TT_Crate_Crate_CrateLevels} CrateLevels : []CrateLevel = array{}
+    @editable CrateLevels : []CrateLevel = array{}
     var CurrentLevel : CrateLevel = CrateLevel{}                                            
     var LevelIDX : int = 0                                                                  
     var CurrentTargetAmount : int = 0
 
     #Crate devices
     TT_Crate_Crate_PropManip<localizes>:message = "A prop manipulator device that is used to detect when the crate is hit"
-    @editable{ToolTip := TT_Crate_Crate_PropManip} PropManip : prop_manipulator_device = prop_manipulator_device{}    
+    @editable PropManip : prop_manipulator_device = prop_manipulator_device{}    
     
     TT_Crate_Crate_CrateProp<localizes>:message = "A creative prop which represents the crate"
-    @editable{ToolTip := TT_Crate_Crate_CrateProp} CrateProp : creative_prop = creative_prop{}    
+    @editable CrateProp : creative_prop = creative_prop{}    
     
     TT_Crate_Crate_CrateVFX<localizes>:message = "A vfx spawner device which is used to spawn a vfx when the crate is hit"
-    @editable{ToolTip := TT_Crate_Crate_CrateVFX} CrateVFX : vfx_spawner_device = vfx_spawner_device{}  
+    @editable CrateVFX : vfx_spawner_device = vfx_spawner_device{}  
 
     TT_Crate_Crate_CrateSound<localizes>:message = "An audio player device which is used to play a sound when the crate is hit"
-    @editable{ToolTip := TT_Crate_Crate_CrateSound} CrateSound : audio_player_device = audio_player_device{} 
+    @editable CrateSound : audio_player_device = audio_player_device{} 
 
     TT_Crate_Crate_CrateXP<localizes>:message = "An accolades device which is used to award xp when the crate is hit"
-    @editable{ToolTip := TT_Crate_Crate_CrateXP} CrateXP : accolades_device = accolades_device{}
+    @editable CrateXP : accolades_device = accolades_device{}
 
     #Settings to control different options in the crate
     TT_Crate_Crate_CrateSettings<localizes>:message = "The settings for the crate"
-    @editable{ToolTip := TT_Crate_Crate_CrateSettings} CrateSettings : CrateSetting = CrateSetting{}
+    @editable CrateSettings : CrateSetting = CrateSetting{}
 
     #Initializes all crate values and level
     InitializeCrate() : void=
@@ -231,16 +194,16 @@ Crate_Manager := class(creative_device):
 #Settings used to control crate
 CrateSetting:= class<concrete>():
     TT_Crate_CrateSetting_DelaySettings<localizes>:message = "The settings for the delay between crate hits"
-    @editable{ToolTip := TT_Crate_CrateSetting_DelaySettings} DelaySettings : DelaySetting = DelaySetting{}
+    @editable DelaySettings : DelaySetting = DelaySetting{}
 
     TT_Crate_CrateSetting_GrowthAnimationSettings<localizes>:message = "The settings for the growth/hit animation of the crate"
-    @editable{ToolTip := TT_Crate_CrateSetting_GrowthAnimationSettings} GrowthAnimationSettings : ScaleAnimationSetting = ScaleAnimationSetting{}
+    @editable GrowthAnimationSettings : ScaleAnimationSetting = ScaleAnimationSetting{}
     
     TT_Crate_CrateSetting_CollectionSettings<localizes>:message = "The settings for the collection of resources from a crate"
-    @editable{ToolTip := TT_Crate_CrateSetting_CollectionSettings} CollectionSettings : CollectionSetting = CollectionSetting{}
+    @editable CollectionSettings : CollectionSetting = CollectionSetting{}
 
     TT_Crate_CrateSetting_UpgradeSettings<localizes>:message = "The settings for the upgrade of the crate"
-    @editable{ToolTip := TT_Crate_CrateSetting_UpgradeSettings} UpgradeSettings : UpgradeSetting = UpgradeSetting{}
+    @editable UpgradeSettings : UpgradeSetting = UpgradeSetting{}
 
 #Settings used to control delay between crate hits
 DelaySetting:= class<concrete>():
@@ -255,16 +218,16 @@ DelaySetting:= class<concrete>():
 #Settings that control how a crate is upgraded
 UpgradeSetting:= class<concrete>():
     TT_Crate_UpgradeSetting_UpgradeOn<localizes>:message = "The type of upgrade that will trigger the crate to upgrade\nOnTrigger: When the a trigger device is triggered\nOnTargetReached: When the crate reaches its target"
-    @editable{ToolTip := TT_Crate_UpgradeSetting_UpgradeOn} UpgradeOn : UpgradeType = UpgradeType.OnTargetReached
+    @editable UpgradeOn : UpgradeType = UpgradeType.OnTargetReached
 
     TT_Crate_UpgradeSetting_UpgradeDisplayBillboard<localizes>:message = "A billboard device which is used to display the current progress  of the crate"
-    @editable{ToolTip := TT_Crate_UpgradeSetting_UpgradeDisplayBillboard} UpgradeDisplayBillboard : billboard_device = billboard_device{}
+    @editable UpgradeDisplayBillboard : billboard_device = billboard_device{}
     
     TT_Crate_UpgradeSetting_UpgradeDisplayHUD<localizes>:message = "A hud message device which is used to display the upgrade message to the player\n*Required Settings*\nMessage Recipient : Triggering Player"
-    @editable{ToolTip := TT_Crate_UpgradeSetting_UpgradeDisplayHUD} UpgradeDisplayHUD : hud_message_device = hud_message_device{}
+    @editable UpgradeDisplayHUD : hud_message_device = hud_message_device{}
     
     TT_Crate_UpgradeSetting_UpgradeCrateTrigger<localizes>:message = "A trigger device which is used to signal the crate to upgrade *Only works if UpgradeOn is set to OnTrigger*"
-    @editable{ToolTip := TT_Crate_UpgradeSetting_UpgradeCrateTrigger} UpgradeCrateTrigger : trigger_device = trigger_device{}                    
+    @editable UpgradeCrateTrigger : trigger_device = trigger_device{}                    
 
 #Setting that controls how resources are collected from a crate
 CollectionSetting:= class<concrete>():

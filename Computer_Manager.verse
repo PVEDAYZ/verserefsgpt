@@ -1,39 +1,3 @@
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -49,23 +13,23 @@ using { /Verse.org/Colors/NamedColors }
 #Class for different upgrades
 Upgrade := class<concrete>():
     TT_CM_Device_UpgradeTrigger<localizes>:message = "A trigger device that will be used to purchase this upgrade"
-    @editable{ToolTip := TT_CM_Device_UpgradeTrigger} Trigger : trigger_device = trigger_device{}
+    @editable Trigger : trigger_device = trigger_device{}
 
     TT_CM_Device_ChangePropSettings<localizes>:message = "The settings for changing props when the upgrade is purchased"
-    @editable{ToolTip := TT_CM_Device_ChangePropSettings} ChangePropSettings : ChangePropSetting = ChangePropSetting{}
+    @editable ChangePropSettings : ChangePropSetting = ChangePropSetting{}
 
 
     TT_CM_Device_IncreaseType<localizes>:message = "Determines how 'UpgradeAmount' will affect the speed"
-    @editable{ToolTip := TT_CM_Device_IncreaseType} IncreaseType : increasetype = increasetype.Add
+    @editable IncreaseType : increasetype = increasetype.Add
 
     TT_CM_Device_UpgradeAmount<localizes>:message = "The amount that the upgrade will affect the speed"
-    @editable{ToolTip := TT_CM_Device_UpgradeAmount} UpgradeAmount : float = 0.0
+    @editable UpgradeAmount : float = 0.0
 
     TT_CM_Device_Reusable<localizes>:message = "Determines if this upgrade can be applied multiple times (switched on and off)"
-    @editable{ToolTip := TT_CM_Device_Reusable} Reusable : logic = false
+    @editable Reusable : logic = false
 
     TT_CM_Device_CostResources<localizes>:message = "The resources that the upgrade will cost"
-    @editable{ToolTip := TT_CM_Device_CostResources} CostResources : []SpendableResource = array{}
+    @editable CostResources : []SpendableResource = array{}
     var IDX : int = 0
 
 #Class for different progreess bars that appear on the PC
@@ -83,16 +47,16 @@ ProgressBar := class<concrete>():
 
     #Settings
     TT_CM_Device_BarSettings<localizes>:message = "The settings for the progress bar"
-    @editable{ToolTip := TT_CM_Device_BarSettings} BarSettings : ProgressBarSetting = ProgressBarSetting{}
+    @editable BarSettings : ProgressBarSetting = ProgressBarSetting{}
 
     TT_CM_Device_TextSettings<localizes>:message = "The settings for the text that will be displayed on the progress bar"
-    @editable{ToolTip := TT_CM_Device_TextSettings} TextSettings : ComputerTextSetting = ComputerTextSetting{}
+    @editable TextSettings : ComputerTextSetting = ComputerTextSetting{}
 
     TT_CM_Device_Upgrades<localizes>:message = "An array of upgrades for the progress bar"
-    @editable{ToolTip := TT_CM_Device_Upgrades} Upgrades : []Upgrade = array{}
+    @editable Upgrades : []Upgrade = array{}
 
     TT_CM_Device_BaseSpeed<localizes>:message = "The base speed for the progress bar"
-    @editable{ToolTip := TT_CM_Device_BaseSpeed} BaseSpeed : float = 0.0
+    @editable BaseSpeed : float = 0.0
 
     #Other Stuff
     CancelEvent : event() = event(){}
@@ -541,39 +505,39 @@ PlayerComputers := class():
 Computer_Manager := class(creative_device):
     #Devices
     TT_CM_Device_GameManager<localizes>:message = "Your Game Manager Device"
-    @editable{ToolTip := TT_CM_Device_GameManager} GameManager : Game_Manager = Game_Manager{}
+    @editable GameManager : Game_Manager = Game_Manager{}
 
     TT_CM_Device_ResourceManager<localizes>:message = "Your Resource Manager Device"
-    @editable{ToolTip := TT_CM_Device_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
 
     TT_CM_Device_PlotManager<localizes>:message = "Your Plot Manager Device"
-    @editable{ToolTip := TT_CM_Device_PlotManager} PlotManager : Plot_Manager = Plot_Manager{}
+    @editable PlotManager : Plot_Manager = Plot_Manager{}
 
     TT_CM_Device_OpenComputerTrigger<localizes>:message = "A trigger device that will open the computer UI"
-    @editable{ToolTip := TT_CM_Device_OpenComputerTrigger} OpenComputerTrigger : trigger_device = trigger_device{}
+    @editable OpenComputerTrigger : trigger_device = trigger_device{}
 
     TT_CM_Device_OpenComputerCinematic<localizes>:message = "A cinematic sequence device that will play when the open computer button is pressed\n*Required Settings*\nVisibility : Instigator Only"
     @editable OpenComputerCinematic : cinematic_sequence_device = cinematic_sequence_device{}
 
     TT_CM_Device_HUDController<localizes>:message = "A hud controller device that will be used to hide the player\'s crosshair when they are interacting with the computer\n*Required Settings*\nDisplay Reticle: Never Show Reticle\nEnabled During Phase : None"
-    @editable{ToolTip := TT_CM_Device_HUDController} HUDController : hud_controller_device = hud_controller_device{}
+    @editable HUDController : hud_controller_device = hud_controller_device{}
     
     
     TT_CM_Device_Teleporter<localizes>:message = "A teleporter device that will be used to teleport the player when the computer UI is opened\n*Required Settings*\nTeleporter Group : None\nTeleporter Target Group : None\nVisibility : False\nFace Player In Teleporter Direction : Yes"
-    @editable{ToolTip := TT_CM_Device_Teleporter} Teleporter : teleporter_device = teleporter_device{}
+    @editable Teleporter : teleporter_device = teleporter_device{}
 
     #Settings
     TT_CM_Device_ProgressBars<localizes>:message = "The settings for progress bars that will be used for the computer"
-    @editable{ToolTip := TT_CM_Device_ProgressBars} ProgressBars : []ProgressBar = array{}
+    @editable ProgressBars : []ProgressBar = array{}
 
     TT_CM_Device_CancelSettings<localizes>:message = "The settings for how a player can close the computer UI"
-    @editable{ToolTip := TT_CM_Device_CancelSettings} CancelSettings : CancelSetting = CancelSetting{}
+    @editable CancelSettings : CancelSetting = CancelSetting{}
     
     TT_CM_Device_OpenSettings<localizes>:message = "The settings for how the computer UI will open"
-    @editable{ToolTip := TT_CM_Device_OpenSettings} OpenSettings : OpenSetting = OpenSetting{}
+    @editable OpenSettings : OpenSetting = OpenSetting{}
     
     TT_CM_Device_CompletionSettings<localizes>:message = "The settings for what happens when the progress bars are completed"
-    @editable{ToolTip := TT_CM_Device_CompletionSettings} CompletionSettings : CompletionSetting = CompletionSetting{}
+    @editable CompletionSettings : CompletionSetting = CompletionSetting{}
 
 
 
@@ -674,56 +638,56 @@ completiontype := enum:
 #Setting for what happens upon completing when the bars fill
 CompletionSetting := class<concrete>():
     TT_CM_Device_CompletionType<localizes>:message = "Determines what happens when the progress bars are completed\nClose : The computer will close after completion\nLoop : The progress bars will reset and continue"
-    @editable{ToolTip := TT_CM_Device_CompletionType} CompletionType : completiontype = completiontype.Close
+    @editable CompletionType : completiontype = completiontype.Close
 
     TT_CM_Device_CompleteResources<localizes>:message = "The resources that will be awarded to the player when the progress bars are completed"
-    @editable{ToolTip := TT_CM_Device_CompleteResources} CompleteResources : []GainableResource = array{}
+    @editable CompleteResources : []GainableResource = array{}
 
     TT_CM_Device_CompleteTrigger<localizes>:message = "A trigger device that will be triggered when the progress bars are completed"
-    @editable{ToolTip := TT_CM_Device_CompleteTrigger} CompleteTrigger : trigger_device = trigger_device{}
+    @editable CompleteTrigger : trigger_device = trigger_device{}
 
 
 #Settings for changing props upon upgrade
 ChangePropSetting := class<concrete>():
     TT_CM_Device_Enabled<localizes>:message = "Enable or disable the following prop change settings"
-    @editable{ToolTip := TT_CM_Device_Enabled} Enabled : logic = false
+    @editable Enabled : logic = false
 
     TT_CM_Device_Cinematic<localizes>:message = "A cinematic sequence device that will play when the an upgrade is purchased\n*Required Settings*\nVisibility : Instigator Only"
-    @editable{ToolTip := TT_CM_Device_Cinematic} Cinematic : cinematic_sequence_device = cinematic_sequence_device{}
+    @editable Cinematic : cinematic_sequence_device = cinematic_sequence_device{}
 
     TT_CM_Device_Trigger<localizes>:message = "A trigger device that will be used to change the prop when the upgrade is purchased"
-    @editable{ToolTip := TT_CM_Device_Trigger} Trigger : trigger_device = trigger_device{}
+    @editable Trigger : trigger_device = trigger_device{}
     
     TT_CM_Device_HideShowDelay<localizes>:message = "How long after purchasing the upgrade, the trigger above will be triggered"
-    @editable{ToolTip := TT_CM_Device_HideShowDelay} HideShowDelay : float = 0.0
+    @editable HideShowDelay : float = 0.0
 
 #Settings for when the Computer is opened
 OpenSetting := class<concrete>():
     TT_CM_Device_OpenType<localizes>:message = "Determines how the progress bar is started\nAuto Start : The progress bar starts when the computer is shown\nOptional : A button must be pressed to start the progress bar"
-    @editable{ToolTip := TT_CM_Device_OpenType} OpenType : opentype = opentype.AutoStart
+    @editable OpenType : opentype = opentype.AutoStart
 
     TT_CM_Device_OptionalOpenStartButtonPosition<localizes>:message = "The position of the button on the UI that will start the progress bar when pressed *Only works if OpenType is Optional*"
-    @editable{ToolTip := TT_CM_Device_OptionalOpenStartButtonPosition} OptionalOpenStartButtonPosition : CanvasPosition = CanvasPosition{}
+    @editable OptionalOpenStartButtonPosition : CanvasPosition = CanvasPosition{}
 
     TT_CM_Device_OptionalOpenStartButtonText<localizes>:message = "The text of the button on the start button *Only works if OpenType is Optional*"
-    @editable{ToolTip := TT_CM_Device_OptionalOpenStartButtonText} OptionalOpenStartButtonText : string = ""
+    @editable OptionalOpenStartButtonText : string = ""
 
     TT_CM_Device_OptionalOpenExitButtonPosition<localizes>:message = "The position of the button on the UI that will stop the progress bar when pressed*"
-    @editable{ToolTip := TT_CM_Device_OptionalOpenExitButtonPosition} OptionalOpenExitButtonPosition : CanvasPosition = CanvasPosition{}
+    @editable OptionalOpenExitButtonPosition : CanvasPosition = CanvasPosition{}
 
     TT_CM_Device_OptionalOpenExitButtonText<localizes>:message = "The text of the button on the exit button *Only works if OpenType is Optional*"
-    @editable{ToolTip := TT_CM_Device_OptionalOpenExitButtonText} OptionalOpenExitButtonText : string = ""
+    @editable OptionalOpenExitButtonText : string = ""
 
 #Settings for how a player cancels
 CancelSetting := class<concrete>():
     TT_CM_Device_CancelType<localizes>:message = "Determines how a player can cancel the computer\nUI : A button will be added to the UI that can be pressed to cancel\nCustom Input : Player can press a specific input (like pressing jump) to exit"
-    @editable{ToolTip := TT_CM_Device_CancelType} CancelType : canceltype = canceltype.UI
+    @editable CancelType : canceltype = canceltype.UI
 
     TT_CM_Device_UIExitPosition<localizes>:message = "The position of the exit button on the UI *Only works if CancelType is UI*"
-    @editable{ToolTip := TT_CM_Device_UIExitPosition} UIExitPosition : CanvasPosition = CanvasPosition{}
+    @editable UIExitPosition : CanvasPosition = CanvasPosition{}
 
     TT_CM_Device_CustomInputTrigger<localizes>:message = "A custom input trigger device that will be used to cancel the computer *Only works if CancelType is Custom Input*\n*Required Settings*\nRegistered Player Behavior : Require Registered"
-    @editable{ToolTip := TT_CM_Device_CustomInputTrigger} CustomInputTrigger : input_trigger_device = input_trigger_device{}
+    @editable CustomInputTrigger : input_trigger_device = input_trigger_device{}
 
 #Settings for the texts for each bar
 ComputerTextSetting := class<concrete>():

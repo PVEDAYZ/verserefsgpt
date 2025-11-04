@@ -1,39 +1,3 @@
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -74,20 +38,20 @@ Reward := class<concrete>():
 
    #Resources granted when claimed
    TT_RM_Reward_RewardResources<localizes>:message = "The resources that are granted when the reward is claimed"
-   @editable{ToolTip := TT_RM_Reward_RewardResources} RewardResources : []GainableResource = array{}
+   @editable RewardResources : []GainableResource = array{}
 
    #Duration for the reward to unlock
    TT_RM_Reward_Duration<localizes>:message = "The duration for the reward to unlock (hours:minutes:seconds)"
-   @editable{ToolTip := TT_RM_Reward_Duration} var Hours : int = 0
-   @editable{ToolTip := TT_RM_Reward_Duration} var Minutes : int = 0
-   @editable{ToolTip := TT_RM_Reward_Duration} var Seconds : int = 0
+   @editable var Hours : int = 0
+   @editable var Minutes : int = 0
+   @editable var Seconds : int = 0
 
    #Devices
    TT_RM_Reward_ClaimTrigger<localizes>:message = "The trigger that gets triggered when a reward is claimed"
-   @editable{ToolTip := TT_RM_Reward_ClaimTrigger} ClaimTrigger : trigger_device = trigger_device{}
+   @editable ClaimTrigger : trigger_device = trigger_device{}
 
    TT_RM_Reward_AlertHUD<localizes>:message = "The hud message that is shown when the reward is available"
-   @editable{ToolTip := TT_RM_Reward_AlertHUD} AlertHUD : hud_message_device = hud_message_device{}
+   @editable AlertHUD : hud_message_device = hud_message_device{}
     
     #Adjusts the current reward times for the player based on their saved playtime, if the persistence is enabled
     AdjustForPersistence(Agent:agent , Playtime : float) : void=
@@ -397,23 +361,23 @@ Reward_Manager := class(creative_device):
     #Base stuff
     PersistanceManager : Tycoon_Persistence_Manager = Tycoon_Persistence_Manager{}
     TT_RM_Device_GameManager<localizes>:message = "Your game manager device"
-    @editable{ToolTip := TT_RM_Device_GameManager} GameManager : Game_Manager = Game_Manager{}
+    @editable GameManager : Game_Manager = Game_Manager{}
 
     TT_RM_Device_ResourceManager<localizes>:message = "Your Resource Manager"
-    @editable{ToolTip := TT_RM_Device_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
 
 
     var PlayerRewardMap : [player]PlayerRewards = map{}
 
     #Devices
     TT_RM_Device_RewardActivateTrigger<localizes>:message = "The trigger that activates the rewards timer"
-    @editable{ToolTip := TT_RM_Device_RewardActivateTrigger} RewardActivateTrigger : trigger_device = trigger_device{}
+    @editable RewardActivateTrigger : trigger_device = trigger_device{}
 
     TT_RM_Device_RewardSettings<localizes>:message = "The settings for the rewards"
-    @editable{ToolTip := TT_RM_Device_RewardSettings} RewardSettings : RewardSetting = RewardSetting{}
+    @editable RewardSettings : RewardSetting = RewardSetting{}
 
     TT_RM_Device_RewardOpenTrigger<localizes>:message = "The trigger that opens the reward UI"
-    @editable{ToolTip := TT_RM_Device_RewardOpenTrigger} RewardOpenTrigger : trigger_device = trigger_device{}
+    @editable RewardOpenTrigger : trigger_device = trigger_device{}
 
     #Different Rewards
     @editable Rewards : []Reward = array{}
@@ -522,14 +486,14 @@ ButtonDisplayType := enum:
 #Combined settings for all rewards
 CombinedRewardSetting := class<concrete>():
     TT_RM_CR_CheckMarkPosition<localizes>:message = "The position of the checkmark on the reward which is shown when it is claimed"
-    @editable{ToolTip := TT_RM_CR_CheckMarkPosition} CheckMarkPosition : CanvasPosition = CanvasPosition{}
+    @editable CheckMarkPosition : CanvasPosition = CanvasPosition{}
 
     TT_RM_CR_ButtonPosition<localizes>:message = "The position of the claim button on the reward"
-    @editable{ToolTip := TT_RM_CR_ButtonPosition} ButtonPosition : CanvasPosition = CanvasPosition{}
+    @editable ButtonPosition : CanvasPosition = CanvasPosition{}
     
 
     TT_RM_CR_TimerPosition<localizes>:message = "The position of the timer on the reward"
-    @editable{ToolTip := TT_RM_CR_TimerPosition} TimerPosition : CanvasPosition = CanvasPosition{}
+    @editable TimerPosition : CanvasPosition = CanvasPosition{}
 
 #Different postion settings for the Reward UI
 DifferentPosition:= class<concrete>():
@@ -551,10 +515,10 @@ RewardSetting := class<concrete>():
     @editable ClaimButtonSettings : ClaimButtonSetting = ClaimButtonSetting{}
     @editable AlertSettings : AlertSetting = AlertSetting{}
     TT_RM_RewardSetting_ShouldPlaytimePersist<localizes>:message = "Whether or not the rewards should persist between games"
-    @editable{ToolTip := TT_RM_RewardSetting_ShouldPlaytimePersist} ShouldPlaytimePersist : logic = false
+    @editable ShouldPlaytimePersist : logic = false
 
     TT_RM_RewardSetting_StartPlaytimeSetting<localizes>:message = "Whether or not the rewards should start counting playtime from game start or a trigger"
-    @editable{ToolTip := TT_RM_RewardSetting_StartPlaytimeSetting} StartPlaytimeSetting : PlaytimeType = PlaytimeType.GameStart
+    @editable StartPlaytimeSetting : PlaytimeType = PlaytimeType.GameStart
 
 #Settings that control how a player is alerted for rewards
 AlertSetting := class<concrete>():

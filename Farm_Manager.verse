@@ -1,41 +1,3 @@
-<#
-====================================================================================================
-Copyright (c) 2024 MapAcademy. All rights reserved.
-
- 
-
-This software and its associated documentation files (the "Software") are the
-
-proprietary property of MapAcademy and are protected by copyright law.
-
- 
-
-The Software is provided to you under the terms of the MapAcademy End User
-
-License Agreement (the "License"). You may use, copy, distribute, and modify
-
-the Software solely in accordance with the terms of the License.
-
- 
-
-BY USING THE SOFTWARE, YOU AGREE TO BE BOUND BY THE TERMS OF THE LICENSE.
-
-IF YOU DO NOT AGREE TO THE TERMS OF THE LICENSE, DO NOT USE THE SOFTWARE.
-
- 
-
-
-The Software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
-
-either express or implied, including without limitation any warranties of
-
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, or NON-INFRINGEMENT.
-
-For more details, please refer to the MapAcademy End User License Agreement.
-====================================================================================================
-#>
-
-
 using { /Fortnite.com/Devices }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
@@ -59,27 +21,27 @@ Crop:= class<concrete>():
 
     #Growth Settings
     TT_FM_Crop_GrowthSettings_CropMaxGrowScale<localizes>:message = "The maximum scale for the crop"
-    @editable{ToolTip := TT_FM_Crop_GrowthSettings_CropMaxGrowScale} CropMaxGrowScale : float = 0.0
+    @editable CropMaxGrowScale : float = 0.0
 
     TT_FM_Crop_GrowthSettings_CropMinGrowScale<localizes>:message = "The minimum scale for the crop"
-    @editable{ToolTip := TT_FM_Crop_GrowthSettings_CropMinGrowScale} CropMinGrowScale : float = 0.0
+    @editable CropMinGrowScale : float = 0.0
 
     TT_FM_Crop_GrowthSettings_CropGrowTime<localizes>:message = "The time it takes for the crop to grow from the minimum scale to the maximum scale"
-    @editable{ToolTip := TT_FM_Crop_GrowthSettings_CropGrowTime} CropGrowTime : float = 0.0
+    @editable CropGrowTime : float = 0.0
 
     #Used to collect the crop
     TT_FM_Crop_CollectionSettings_CropMutator<localizes>:message = "A mutator zone device which is used collect the crop"
-    @editable{ToolTip := TT_FM_Crop_CollectionSettings_CropMutator} CropMutator : mutator_zone_device = mutator_zone_device{}
+    @editable CropMutator : mutator_zone_device = mutator_zone_device{}
 
     TT_FM_Crop_CollectionSettings_CropManipulator<localizes>:message = "A prop manipulator device which is used to collect the crop when the crop prop is hit"
-    @editable{ToolTip := TT_FM_Crop_CollectionSettings_CropManipulator} CropManipulator : prop_manipulator_device = prop_manipulator_device{}
+    @editable CropManipulator : prop_manipulator_device = prop_manipulator_device{}
 
     #Crop Props
     TT_FM_Crop_Props_CropReadyProp<localizes>:message = "The prop that is shown when the crop is ready"
-    @editable{ToolTip := TT_FM_Crop_Props_CropReadyProp} CropReadyProp : creative_prop = creative_prop{}
+    @editable CropReadyProp : creative_prop = creative_prop{}
 
     TT_FM_Crop_Props_CropProp<localizes>:message = "The prop that is shown when the crop is growing"
-    @editable{ToolTip := TT_FM_Crop_Props_CropProp} CropProp : creative_prop = creative_prop{}
+    @editable CropProp : creative_prop = creative_prop{}
 
     #Enables and initializes the crop                        
     EnableCrop()<suspends> : void=                                         
@@ -129,14 +91,14 @@ CropSet := class<concrete>():
 
     #Crops
     TT_FM_CropSet_Crops<localizes>:message = "An array of crops"
-    @editable{ToolTip := TT_FM_CropSet_Crops} Crops : []Crop = array{}       
+    @editable Crops : []Crop = array{}       
     
     TT_FM_CropSet_CropResources<localizes>:message = "An array of resources that can be gained from the crops"
-    @editable{ToolTip := TT_FM_CropSet_CropResources} CropResources : []GainableResource = array{}       
+    @editable CropResources : []GainableResource = array{}       
 
     #Trigger to enable the set of crops
     TT_FM_CropSet_EnableTrigger<localizes>:message = "A trigger device which enables/start the growth of the crops"
-    @editable{ToolTip := TT_FM_CropSet_EnableTrigger} EnableTrigger : trigger_device = trigger_device{}    
+    @editable EnableTrigger : trigger_device = trigger_device{}    
 
     #Enables this set of crops
     EnableSet(Agent:?agent) : void=                     
@@ -165,27 +127,27 @@ CropSet := class<concrete>():
 Farm_Manager := class(creative_device):
     #Base Stuff
     TT_FM_Device_GameManager<localizes>:message = "Your Game Manager"
-    @editable{ToolTip := TT_FM_Device_GameManager} GameManager : Game_Manager = Game_Manager{}   
+    @editable GameManager : Game_Manager = Game_Manager{}   
     
     TT_FM_Device_ResourceManager<localizes>:message = "Your Resource Manager"
-    @editable{ToolTip := TT_FM_Device_ResourceManager} ResourceManager : Resource_Manager = Resource_Manager{}
+    @editable ResourceManager : Resource_Manager = Resource_Manager{}
     
     TT_FM_Device_PlotManager<localizes>:message = "Your Plot Manager"
-    @editable{ToolTip := TT_FM_Device_PlotManager} PlotManager : Plot_Manager = Plot_Manager{}
+    @editable PlotManager : Plot_Manager = Plot_Manager{}
 
     #Crop Sets
     TT_FM_Device_CropSets<localizes>:message = "An array of crop sets"
-    @editable{ToolTip := TT_FM_Device_CropSets} CropSets : []CropSet = array{}                                    
+    @editable CropSets : []CropSet = array{}                                    
 
     #Activating devices
     TT_FM_Device_PickupAudio<localizes>:message = "The audio player device which is used to play the pickup audio\n*Required Settings*\n Can be heard by : Instigator Only\n Play Location : Instigating Player"
-    @editable{ToolTip := TT_FM_Device_PickupAudio} PickupAudio : audio_player_device = audio_player_device{}
+    @editable PickupAudio : audio_player_device = audio_player_device{}
     
     TT_FM_Device_CropXP<localizes>:message = "The accolades device which is used to award the player xp for collecting the crop"
-    @editable{ToolTip := TT_FM_Device_CropXP} CropXP : accolades_device = accolades_device{} 
+    @editable CropXP : accolades_device = accolades_device{} 
     
     TT_FM_Device_CropTracker<localizes>:message = "The tracker device which is incremented when a crop is collected\n*Required Settings*\nStat to track : Events"
-    @editable{ToolTip := TT_FM_Device_CropTracker} CropTracker : tracker_device = tracker_device{} 
+    @editable CropTracker : tracker_device = tracker_device{} 
 
     #Initializes all crops
     OnBegin<override>()<suspends>:void=
