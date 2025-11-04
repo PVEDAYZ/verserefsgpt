@@ -1,0 +1,140 @@
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/UI }
+using { /Verse.org/Colors }
+using { /Verse.org/Native }
+using { /UnrealEngine.com/Temporary/SpatialMath }
+using { /Fortnite.com/UI }
+
+# Device to display a real-time clock HUD for players
+real_time_clock_hud := class(creative_device):
+
+    # UTC offset in seconds (editable in UEFN)
+    # Example values:
+    # 0.0 for UTC
+    # 3600.0 for UTC+1
+    # -3600.0 for UTC-1
+    # 7200.0 for UTC+2
+    # 10800.0 for UTC+3
+    # 14400.0 for UTC+4
+    # 18000.0 for UTC+5
+    # 21600.0 for UTC+6
+    # 25200.0 for UTC+7
+    # 28800.0 for UTC+8
+    # 32400.0 for UTC+9
+    # 36000.0 for UTC+10
+    # 39600.0 for UTC+11
+    # 43200.0 for UTC+12
+    
+    @editable
+    UTC : float = 0.0
+
+    # Store the HUD widget so we can update/remove it
+    var PlayerHUDs : [player]canvas = map{}
+    var TimeTextWidgets : [player]text_block = map{}
+
+    # Helper to convert string to message
+    StringToMessage<localizes>(InString : string) : message = "{InString}"
+
+    # Helper function to get hours in 24-hour format
+    GetHours(TotalSeconds:int):int=
+        if (Hours := Floor[TotalSeconds * 1.0 / 3600.0]):
+            if (Hours >= 24):
+                if (Days := Floor[Hours * 1.0 / 24.0]):
+                    return Hours - (Days * 24)
+            return Hours
+        return 0
+
+    # Helper function to get minutes
+    GetMinutes(TotalSeconds:int):int=
+        if (Minutes := Floor[(TotalSeconds * 1.0 / 60.0)]):
+            if (Minutes >= 60):
+                if (Hours := Floor[Minutes * 1.0 / 60.0]):
+                    return Minutes - (Hours * 60)
+            return Minutes
+        return 0
+
+    # Helper function to get seconds
+    GetSeconds(TotalSeconds:int):int=
+        if (Seconds := Floor[TotalSeconds * 1.0]):
+            if (Seconds >= 60):
+                if (Minutes := Floor[Seconds * 1.0 / 60.0]):
+                    return Seconds - (Minutes * 60)
+            return Seconds
+        return 0
+
+    # Format total seconds as HH:MM:SS
+    FormatTimeHHMMSS(TotalSeconds:float):string=
+        if (TotalInt := Floor[TotalSeconds]):
+            var Hours : int = GetHours(TotalInt)
+            var Minutes : int = GetMinutes(TotalInt)
+            var Seconds : int = GetSeconds(TotalInt)
+
+            HoursStr := if (Hours < 10) { "0{Hours}" } else { "{Hours}" }
+            MinutesStr := if (Minutes < 10) { "0{Minutes}" } else { "{Minutes}" }
+            SecondsStr := if (Seconds < 10) { "0{Seconds}" } else { "{Seconds}" }
+            return "{HoursStr}:{MinutesStr}:{SecondsStr}"
+        return "00:00:00"
+
+    # Runs when the device is started in a running game
+    OnBegin<override>()<suspends>:void=
+        # Show HUD to all current players
+        for (Player : GetPlayspace().GetPlayers()):
+            ShowClockHUD(Player)
+        # Subscribe to new players joining
+        GetPlayspace().PlayerAddedEvent().Subscribe(OnPlayerAdded)
+        # Start clock update loop
+        spawn{ UpdateClockLoop() }
+
+    # Show the clock HUD to a player
+    ShowClockHUD(Player:player):void=
+        if (PlayerUI := GetPlayerUI[Player]):
+            TimeText := text_block{
+                DefaultText := StringToMessage("00:00:00"),
+                DefaultTextColor := NamedColors.White,
+                DefaultJustification := text_justification.Center
+            }
+            ClockCanvas := canvas{
+                Slots := array{
+                    canvas_slot{
+                        Widget := TimeText,
+                        Anchors := anchors{Minimum := vector2{X := 0.5, Y := 0.1}, Maximum := vector2{X := 0.5, Y := 0.1}},
+                        Alignment := vector2{X := 0.5, Y := 0.5}
+                    }
+                }
+            }
+            PlayerUI.AddWidget(ClockCanvas)
+            if (set PlayerHUDs[Player] = ClockCanvas) {}
+            if (set TimeTextWidgets[Player] = TimeText) {}
+
+    # Remove the clock HUD from a player
+    RemoveClockHUD(Player:player):void=
+        if (PlayerUI := GetPlayerUI[Player], Canvas := PlayerHUDs[Player]):
+            PlayerUI.RemoveWidget(Canvas)
+            var NewHUDs : [player]canvas = map{}
+            var NewTexts : [player]text_block = map{}
+            for (P -> H : PlayerHUDs, P <> Player):
+                if (set NewHUDs[P] = H) {}
+            for (P -> T : TimeTextWidgets, P <> Player):
+                if (set NewTexts[P] = T) {}
+            set PlayerHUDs = NewHUDs
+            set TimeTextWidgets = NewTexts
+
+    # Handle new players joining
+    OnPlayerAdded(Player:player):void=
+        ShowClockHUD(Player)
+
+    # Update the clock every second
+    UpdateClockLoop()<suspends>:void=
+        loop:
+            UpdateAllClocks()
+            Sleep(1.0)
+
+    # Update the clock display for all players
+    UpdateAllClocks():void=
+        # Get current time and apply UTC offset
+        CurrentTime := GetSecondsSinceEpoch() + UTC
+        TimeString := FormatTimeHHMMSS(CurrentTime)
+        TimeMsg := StringToMessage(TimeString)
+        for (Player -> TimeText : TimeTextWidgets):
+            TimeText.SetText(TimeMsg)

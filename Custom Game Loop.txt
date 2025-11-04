@@ -1,0 +1,393 @@
+BOTSTRAP DEVICE
+
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /Fortnite.com/Playspaces }
+
+using {GamePhases}
+using {GameConfigs}
+
+bootstrap_device<public> := class(creative_device):
+    # Here is a reference to any config that can be shared
+    # between the phases.
+    @editable 
+    Config<public>:game_config = game_config{}
+
+    # This is used to end the experience if any player data is invalid
+    # or if the user chooses to on game over.
+    @editable
+    EndGameDevice<private>:end_game_device = end_game_device{}
+
+    # Set the phase you want the game to start in
+    # This can help when you want to test a specific phase
+    @editable
+    StartingPhase<private>:phase_type = phase_type.Intro
+
+    # This exposes all the phase data that can be edited in the editor
+    # via this bootstrap device
+    @editable
+    PhasesData<private>:phases = phases{}
+
+    # Track the current phase
+    var CurrentPhase<private>:?game_phase = false
+    
+    # Local reference to the playspace to allow phases to access
+    var Playspace<public>:?fort_playspace = false
+
+    # After a phase is initialised it is stored in this map for ease of lookup
+    var PhaseInstances<private>:[phase_type]game_phase = map{}
+
+    # Runs when the device is started in a running game
+    OnBegin<override>()<suspends>:void =
+        # Store a reference to the playspace as phases can use the 
+        # bootstrap reference to access any playspace data 
+        set Playspace = option{GetPlayspace()}
+
+        # Loop through phases that are in the phase array and initialise with a reference to the bootstrap
+        # insert them into a map for quick access when switching phases.
+        # If you want a phase to be in the game it must be in the array from the GetPhases function
+        for (Phase : PhasesData.GetPhases(), set PhaseInstances[Phase.PhaseType()] = Phase):
+            Phase.Init(Self)
+            Print("Data setup for Phase {Phase.PhaseType().ToString()}")
+
+        # subscribe to players leaving and joining the sessions
+        if (PS := Playspace?):
+            PS.PlayerAddedEvent().Subscribe(OnAgentJoin)
+            PS.PlayerRemovedEvent().Subscribe(OnAgentLeave)
+
+        # Set the phase to the starting phase
+        ChangePhase(StartingPhase, false)
+
+        # Start the GameLoop
+        if (CurrentPhase?):
+            GameLoop()
+
+    GameLoop<private>()<suspends>:void =
+        loop:
+            # Whilst waiting for the current phase to end
+            # Continue to update the current phase
+            # The result of this race will be the new phase to change to
+            PhaseChangeResult := race:
+                PhaseEndListener()
+                BeginPhaseLoop()
+
+            ChangePhase(PhaseChangeResult)
+
+    # Listens for the End Event of Each Phase
+    # If this event is triggered it will end the race expression and
+    # moving the logic to the next phase or ending the experience
+    PhaseEndListener<private>()<suspends>:tuple(phase_type, logic) =
+        if (CP := CurrentPhase?):
+            CP.PhaseEndEvent.Await()
+        else:
+            (phase_type.Invalid, true)
+
+    # Start the Update of the current selected phase
+    # If the Phases Update doesn't have any loop logic
+    # It will return to the next phase to transition to
+    BeginPhaseLoop<private>()<suspends>:tuple(phase_type, logic) =
+        if (CP:= CurrentPhase?):
+            CP.PhaseUpdate()
+        else:
+            (phase_type.Invalid, true)
+    
+    # Responsible for changing the Currently Selected State.
+    # It will also do a validation to check if the New State is initialised and
+    # Available in the Phase Map. If the new state is invalid the experience will end.
+    ChangePhase<private>(PhaseChange:tuple(phase_type, logic)):void =
+        Print("Changing phase to: {PhaseChange(0).ToString()}")
+
+        # End the Current Phase
+        if (CP:= CurrentPhase?):
+            CP.PhaseEnd()
+
+            # Clear the Current Phase to the initial state if required
+            if (PhaseChange(1)?):
+                CP.ResetToInitalState()
+            
+        # Find the new phase being changed to
+        if (Phase := PhaseInstances[PhaseChange(0)]):
+            
+            #Cache a reference to the current phase and begin the phase
+            set CurrentPhase = option {Phase}
+            Phase.PhaseBegin()
+        else:
+            Print("Phase {PhaseChange(0).ToString()}, is not registered in phase array. Ending Experience please check game loop PhaseInstances or Follow Phases for each game_phase")
+            # End the experience
+
+            for (Agent: Playspace?.GetParticipants()):
+                EndGameDevice.Activate(Agent)
+            
+    # Handles passing the data of the joining player into the current selected phase.
+    # Each state is responsible for the required logic for a player joining that state. 
+    OnAgentJoin<private>(Agent:agent):void =
+       Print("AGENT JOINED")
+
+        if (CP:= CurrentPhase?):
+            CP.HandleOnAgentJoin(Agent)
+
+    # Handles passing the data of the leaving player into the current selected phase.
+    # Each state is responsible for the required logic for a player leaving that state. 
+    OnAgentLeave<private>(Agent:agent):void =
+       Print("AGENT LEFT")
+
+        if (CP:= CurrentPhase?):
+            CP.HandleOnAgentLeave(Agent)
+            
+			
+GAME PHASE BASE CLASS
+using {VerseDevices}
+using { /Verse.org/Simulation }
+
+# This is the base class that all phases inherit from
+game_phase<public> := class<abstract>():
+
+    # This is the next Phase the current Phase will transition to
+    # A default phase is given here but this can be overridden in the instance
+    # of a phase having multiple ending routes.
+    # For example a game-over phase might allow a user to end the whole experience or
+    # restart the game
+    @editable
+    var DefaultFollowOnPhase:phase_type = phase_type.Invalid
+
+    # This is a reference to the bootstrap device. Where you can access the config
+    # of the experience. Or access any devices that are referenced in the bootstrap device
+    var BootstrapDevice:?bootstrap_device = false
+
+    # The init function sets the reference to the bootstrap device whilst also resetting 
+    # phases to their initial state.
+    Init<public>(InGameLoopDevice:bootstrap_device):void =
+        set BootstrapDevice = option{InGameLoopDevice}
+        ResetToInitalState()
+
+    # This Method is called first when switching to a new phase
+    # It should be used for initialising the Phase before the update loop starts
+    PhaseBegin<public>():void
+    # This Method will be called continuously until an End Phase Signal is triggered.
+    # The majority of the phases' logic will be written here
+    PhaseUpdate<public>()<suspends>:tuple(phase_type, logic)
+    # This Phase is called after an End Signal has been triggered and just before new phases
+    # Begin is called.
+    PhaseEnd<public>():void
+
+    # You can use this method to handle any cleanup you didn't want to occur during the PhaseEnd but 
+    # need to cleanup when the whole experience loop completes.
+    ResetToInitalState<public>():void
+
+    # This returns the enum type of the Phase
+    PhaseType<public>()<transacts>:phase_type
+    
+    # This method is used to end the current Phase and progress to the next one. Either using the DefaultFollowOnPhase
+    # or one override in code
+    NextPhase<public>(__:phase_type, ?ResetInitalState:logic = false):tuple(phase_type, logic) = {__, ResetInitalState}
+
+    # This event controls the ending flow of the round system. When this event triggers the current Phase will end and the
+    # follow Phase will begin
+    PhaseEndEvent<public>:event(tuple(phase_type, logic)) = event(tuple(phase_type, logic)){}
+
+    # Handles the logic on players joining whilst the game is in a particular phase
+    HandleOnAgentJoin<public>(Agent:agent):void
+    # Handles the logic on players leaving whilst the game is in a particular phase
+    HandleOnAgentLeave<public>(Agent:agent):void
+	
+	INTRO PHASE
+	using { /Verse.org/Simulation }
+
+intro_phase<public> := class<concrete>(game_phase):
+
+    PhaseBegin<override>():void = ()
+    # Put all the game logic you want to happen when this phase starts here.
+    # For example any initialisation of variables or subscriptions to any device events
+
+    PhaseUpdate<override>()<suspends>:tuple(phase_type, logic) =
+        (DefaultFollowOnPhase, true)
+    # This Update is an example of a single run with no looping.
+    # It doesn't return the end signal to end the phase and will
+    # Returns the next phase to follow on to
+    # Put all your game logic you want to occur in this phase here.
+    # Example updating scores or UI when an action is performed
+
+    PhaseEnd<override>():void = ()
+    # This is the exit of the phase
+    # Put any logic you want to happen when the phase is finished.
+    # Example putting players into stasis or making sure all cinematics have stopped playing
+    # for all players
+
+    # This is an example of sending a PhaseEnd Signal
+    # Note the ResetInitialState is optional and explained in the ResetToInitalState method
+    # PhaseEndEvent.Signal(NextPhase(DefaultFollowOnPhase, ?ResetInitalState := true))
+
+    ResetToInitalState<override>()<transacts>:void = ()
+    # This function is optional and only called if the ResetInitalState flag is true when 
+    # calling the NextPhase method.
+    # You can use this method to set any variables back to their initial state.
+    # This is separate from the PhaseEnd because you may want phases to repeat i.e Main Phase can move to another Main Phase, and keep
+    # any internal variables set until specified
+
+    # Important Make sure this returns the correct enum 
+    # This Function Returns the associated enum type of the phase
+    PhaseType<override>()<reads>:phase_type =
+        phase_type.Intro
+        
+    HandleOnAgentJoin<override>(Agent:agent):void = ()
+    # This function is called when a player joins the game mid-progress
+    # You can handle any state-specific logic here for when a player joins.
+    # e.g. making sure a cinematic sequence plays for a later joiner.
+     
+    HandleOnAgentLeave<override>(Agent:agent):void = ()
+    # This function is called when a player leaves the game mid-progress
+    # You can handle any state-specific logic here for when a player Leaves.
+    # e.g updating all player data to remove a player from the score UI
+
+
+    MAIN PHASE
+	using { /Verse.org/Simulation }
+
+main_phase<public> := class<concrete>(game_phase):
+
+    PhaseBegin<override>():void = ()
+    # Put all the game logic you want to happen when this phase starts here.
+    # For example any initialisation of variables or subscriptions to any device events
+
+    PhaseUpdate<override>()<suspends>:tuple(phase_type, logic) =
+        loop:
+            Sleep(0.0)
+        (DefaultFollowOnPhase, true)
+    # This example update function will continuously loop until an End Signal is sent
+    # Put all your game logic you want to occur in this phase here.
+    # Example updating scores or UI when an action is performed
+
+    PhaseEnd<override>():void = ()
+    # This is the exit of the phase
+    # Put any logic you want to happen when the phase is finished.
+    # Example putting players into stasis or making sure all cinematics have stopped playing
+    # for all players
+
+    # This is an example of sending a PhaseEnd Signal
+    # Note the ResetInitialState is optional and explained in the ResetToInitalState method
+    # PhaseEndEvent.Signal(NextPhase(DefaultFollowOnPhase, ?ResetInitalState := true))
+
+    ResetToInitalState<override>()<transacts>:void = ()
+    # This function is optional and only called if the ResetInitalState flag is true when 
+    # calling the NextPhase method.
+    # You can use this method to set any variables back to their initial state.
+    # This is separate from the PhaseEnd because you may want phases to repeat i.e Main Phase can move to another Main Phase, and keep
+    # any internal variables set until specified
+
+    # Important Make sure this returns the correct enum 
+    # This Function Returns the associated enum type of the phase
+    PhaseType<override>()<reads>:phase_type =
+        phase_type.Main
+        
+    HandleOnAgentJoin<override>(Agent:agent):void = ()
+    # This function is called when a player joins the game mid-progress
+    # You can handle any state-specific logic here for when a player joins.
+    # e.g. making sure a cinematic sequence plays for a later joiner.
+        
+    HandleOnAgentLeave<override>(Agent:agent):void = ()
+    # This function is called when a player leaves the game mid-progress
+    # You can handle any state-specific logic here for when a player Leaves.
+    # e.g updating all player data to remove a player from the score UI
+
+
+    GAME OVER PHASE
+	using { /Verse.org/Simulation }
+
+gameover_phase<public> := class<concrete>(game_phase):
+
+    PhaseBegin<override>():void = ()
+    # Put all the game logic you want to happen when this phase starts here.
+    # For example any initialisation of variables or subscriptions to any device events
+
+    PhaseUpdate<override>()<suspends>:tuple(phase_type, logic) =
+        (DefaultFollowOnPhase, true)
+    # Put all your game logic you want to occur in this phase here.
+    # Example updating scores or UI when an action is performed
+        
+    PhaseEnd<override>():void = ()
+    # This is the exit of the phase
+    # Put any logic you want to happen when the phase is finished.
+    # Example putting players into stasis or making sure all cinematics have stopped playing
+    # for all players
+
+    # This is an example of sending a PhaseEnd Signal
+    # Note the ResetInitialState is optional and explained in the ResetToInitalState method
+    # PhaseEndEvent.Signal(NextPhase(DefaultFollowOnPhase, ?ResetInitalState := true))
+
+    ResetToInitalState<override>()<transacts>:void = ()
+    # This function is optional and only called if the ResetInitalState flag is true when 
+    # calling the NextPhase method.
+    # You can use this method to set any variables back to their initial state.
+    # This is separate from the PhaseEnd because you may want phases to repeat i.e Main Phase can move to another Main Phase, and keep
+    # any internal variables set until specified
+
+    # Important Make sure this returns the correct enum 
+    # This Function Returns the associated enum type of the phase
+    PhaseType<override>()<reads>:phase_type =
+        phase_type.GameOver
+        
+    HandleOnAgentJoin<override>(Agent:agent):void = ()
+    # This function is called when a player joins the game mid-progress
+    # You can handle any state-specific logic here for when a player joins.
+    # e.g. making sure a cinematic sequence plays for a later joiner.
+        
+    HandleOnAgentLeave<override>(Agent:agent):void = ()
+    # This function is called when a player leaves the game mid-progress
+    # You can handle any state-specific logic here for when a player Leaves.
+    # e.g updating all player data to remove a player from the score UI
+
+
+    PHASE DATA
+	using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+
+# This class exposes the phases you would like for your experience to the editor
+# You are able to change any editable values within each phase from the editor 
+# on the associated creative device. In this example that device is the bootstrap_device
+phases <public> := class<concrete>():
+    @editable
+    IntroPhase<private> : intro_phase = intro_phase{}
+    @editable
+    MainPhase<private> : main_phase = main_phase{}
+    @editable
+    GameOverPhase<private> : gameover_phase = gameover_phase{}
+
+    # The phases that are in this array are the ones that are initialised within the boot_strap_device
+    # If a phase exists but is not in this array, then it will not be used in the game.
+    GetPhases<public>()<transacts>:[]game_phase =
+        array{
+            IntroPhase,
+            MainPhase,
+            GameOverPhase
+            }
+
+
+    PHASE TYPES
+	phase_type<public> := enum:
+    Invalid,
+    Intro,
+    Main,
+    GameOver
+	
+	PHASE HELPER
+	# Helper Function to convert an enum into a string to allow for easier logging information
+(PhaseType:phase_type).ToString<public>():string =
+    case(PhaseType):
+        phase_type.Invalid =>   "invalid"
+        phase_type.Intro => "intro"
+        phase_type.Main => "main"
+        phase_type.GameOver => "game_over"
+
+
+    GAME CONFIG
+	using { /Verse.org/Simulation }
+
+# This is an example of what a global config structure
+# A global config is data that is used in 2 or more phases
+# For example if a gameplay phase or game-over phase needs to know the 
+# number of rounds
+game_config<public> := class<concrete>():
+    @editable
+    NumberOfRounds<public>:int = 8
+    @editable
+    RoundLength<public>:int = 60

@@ -1,0 +1,276 @@
+
+GUtility<public> := module:
+
+    using { /Verse.org/Simulation }
+
+    WidgetCore<public> := module:
+
+        using { /UnrealEngine.com/Temporary/UI }
+
+        common_widget_interface<public> := interface:
+            Player<public>:player
+
+        common_widget_base<public> := class<abstract><castable>(common_widget_interface):
+
+            var<private> CurrentCanvas<public>:?canvas = false
+            RemoveUIEvent<public>:event() = event(){}
+
+            AddGameplayUI<public>():void=
+                if(PlayerUI := GetPlayerUI[Player], not HasCanvas[]):
+                    NewCanvas := CreateCanvas()
+                    PlayerUI.AddWidget(NewCanvas)
+                    set CurrentCanvas = option{NewCanvas}
+                    spawn{RunInternal()}
+
+            AddInteractUI<public>():void=
+                if(PlayerUI := GetPlayerUI[Player], not HasCanvas[]):
+                    NewCanvas := CreateCanvas()
+                    PlayerUI.AddWidget(NewCanvas, player_ui_slot{InputMode := ui_input_mode.All})
+                    set CurrentCanvas = option{NewCanvas}
+                    spawn{RunInternal()}
+
+            RemoveUI<public>():void=
+                if(PlayerUI := GetPlayerUI[Player], TargetCanvas := CurrentCanvas?):
+                    PlayerUI.RemoveWidget(TargetCanvas)
+                    set CurrentCanvas = false
+                    RemoveUIEvent.Signal()
+
+            Run<protected>()<suspends>:void=
+                return
+
+            HasCanvas<public>()<decides><reads>:void=
+                CurrentCanvas?
+
+            CreateCanvas<protected>():canvas
+
+            RunInternal<private>()<suspends>:void=
+                race:
+                    Run()
+                    RemoveUIEvent.Await()
+
+        has_widget_interface<public> := interface:
+            GetWidget<public>()<transacts>:widget
+
+        part_widget_base<public> := class<abstract>(common_widget_interface, has_widget_interface):
+
+    WidgetInfo<public> := module:
+        using { /UnrealEngine.com/Temporary/SpatialMath }
+        using { /UnrealEngine.com/Temporary/UI }
+        
+        editable_anchors<public> := class<concrete>:
+            @editable
+            Maximum<public>:vector2 = vector2{}
+            @editable
+            Minimum<public>:vector2 = vector2{}
+
+            GetAnchors<public>()<transacts>:anchors=
+                anchors:
+                    Maximum := Maximum
+                    Minimum := Minimum
+
+    WidgetDevice<public> := module:
+
+        using { /UnrealEngine.com/Temporary/UI }
+
+        using { Match }
+        using { WidgetCore }
+        using { Map }
+
+        empty_widget<public> := class<final>(common_widget_base):
+            CreateCanvas<override>():canvas=
+                canvas{}
+
+        widget_creative_device<public> := class(match_creative_device):
+            
+            var<protected> WidgetPerPlayer<public>:[player]common_widget_base = map{}
+
+            CreateWidget<protected>(InPlayer:player):common_widget_base=
+                empty_widget{Player := InPlayer}
+
+            GetWidget<public>(InPlayer:player, widget_type:castable_subtype(common_widget_base))<decides><reads>:widget_type=
+                TargetWidget := WidgetPerPlayer[InPlayer]
+                widget_type[TargetWidget]
+            
+            OnPlay<override>(InPlayer:player):void=
+                NewWidget := CreateWidget(InPlayer)
+                NewWidget.AddGameplayUI()
+                if:
+                    set WidgetPerPlayer[InPlayer] = NewWidget
+
+            OnLeave<override>(InPlayer:player):void=
+                if(TargetWidget := WidgetPerPlayer[InPlayer]):
+                    TargetWidget.RemoveUI()
+                    set WidgetPerPlayer = WidgetPerPlayer.RemoveKey(InPlayer)
+
+    Device<public> := module:
+
+        using { /Fortnite.com/Devices }
+        using { /UnrealEngine.com/Temporary/SpatialMath }
+
+        (InPowerupDevice:powerup_device).Attach<public>(InAgent:agent):void=
+            InPowerupDevice.SetDuration(-1.0)
+            InPowerupDevice.Pickup(InAgent)
+
+        (InPowerupDevice:powerup_device).Detach<public>(InAgent:agent):void=
+            if(InPowerupDevice.HasEffect[InAgent]):
+                InPowerupDevice.SetDuration(0.01)
+                InPowerupDevice.Pickup(InAgent)
+
+        directional_input_trigger_device<public> := class(creative_device):
+            @editable
+            ForwardInput<public>:input_trigger_device = input_trigger_device{}
+            @editable
+            BackwardInput<public>:input_trigger_device = input_trigger_device{}
+            @editable
+            RightInput<public>:input_trigger_device = input_trigger_device{}
+            @editable
+            LeftInput<public>:input_trigger_device = input_trigger_device{}
+            @editable
+            UpInput<public>:input_trigger_device = input_trigger_device{}
+            @editable
+            DownInput<public>:input_trigger_device = input_trigger_device{}
+
+            GetDirectionalInput<public>(InAgent:agent)<decides><transacts>:vector3=
+                ForwardVector := 
+                    if:
+                        ForwardInput.IsHeld[InAgent]
+                    then:
+                        vector3{X := 1.0}
+                    else if:
+                        BackwardInput.IsHeld[InAgent]
+                    then:
+                        vector3{X := -1.0}
+                    else:
+                        vector3{}
+
+                RightVector :=
+                    if:
+                        RightInput.IsHeld[InAgent]
+                    then:
+                        vector3{Y := 1.0}
+                    else if:
+                        LeftInput.IsHeld[InAgent]
+                    then:
+                        vector3{Y := -1.0}
+                    else:
+                        vector3{}
+
+                UpVector :=
+                    if:
+                        UpInput.IsHeld[InAgent]
+                    then:
+                        vector3{Z := 1.0}
+                    else if:
+                        DownInput.IsHeld[InAgent]
+                    then:
+                        vector3{Z := -1.0}
+                    else:
+                        vector3{}
+
+                (ForwardVector + RightVector + UpVector).MakeUnitVector[]
+
+            GetDirectionalInput<public>(InAgent:agent, InRotation:rotation)<decides><transacts>:vector3=
+                ForwardVector := 
+                    if:
+                        ForwardInput.IsHeld[InAgent]
+                    then:
+                        InRotation.GetLocalForward()
+                    else if:
+                        BackwardInput.IsHeld[InAgent]
+                    then:
+                        -InRotation.GetLocalForward()
+                    else:
+                        vector3{}
+                RightVector :=
+                    if:
+                        RightInput.IsHeld[InAgent]
+                    then:
+                        InRotation.GetLocalRight()
+                    else if:
+                        LeftInput.IsHeld[InAgent]
+                    then:
+                        -InRotation.GetLocalRight()
+                    else:
+                        vector3{}
+                UpVector :=
+                    if:
+                        UpInput.IsHeld[InAgent]
+                    then:
+                        InRotation.GetLocalUp()
+                    else if:
+                        DownInput.IsHeld[InAgent]
+                    then:
+                        -InRotation.GetLocalUp()
+                    else:
+                        vector3{}
+                (ForwardVector + RightVector + UpVector).MakeUnitVector[]
+
+    Match<public> := module:
+
+        using { /Fortnite.com/Playspaces }
+        using { /Fortnite.com/Devices }
+        using { /Verse.org/SceneGraph }
+
+        match_interface<public> := interface:
+            OnPlay<public>(InPlayer:player):void
+            OnLeave<public>(InPlayer:player):void
+
+        (InPlayspace:fort_playspace).SubscribeMatch<public>(InMatchInterface:match_interface):void=
+            for:
+                PlayerElement : InPlayspace.GetPlayers()
+            do:
+                InMatchInterface.OnPlay(PlayerElement)
+            InPlayspace.PlayerAddedEvent().Subscribe(InMatchInterface.OnPlay)
+            InPlayspace.PlayerRemovedEvent().Subscribe(InMatchInterface.OnLeave)
+
+        match_creative_device<public> := class(creative_device, match_interface):
+
+            OnBegin<override>()<suspends>:void=
+                GetPlayspace().SubscribeMatch(Self)
+
+            OnPlay<override>(InPlayer:player):void=
+                return
+
+            OnLeave<override>(InPlayer:player):void=
+                return
+
+    Map<public> := module:
+
+        (InMap:[t]u).RemoveKey<public>(InKey:t where t:subtype(comparable), u:type)<transacts>:[t]u=
+            var Result:[t]u = map{}
+            for:
+                Key -> Value : InMap
+                Key <> InKey
+            do:
+                set Result = ConcatenateMaps(Result, map{Key => Value})
+            Result
+
+    Vector<public> := module:
+        using { /UnrealEngine.com/Temporary/SpatialMath }
+        
+        Max<public>(X:vector3, Y:vector3)<transacts>:vector3=
+            vector3:
+                X := Max(X.X, Y.X)
+                Y := Max(X.Y, Y.Y)
+                Z := Max(X.Z, Y.Z)
+
+        Min<public>(X:vector3, Y:vector3)<transacts>:vector3=
+            vector3:
+                X := Min(X.X, Y.X)
+                Y := Min(X.Y, Y.Y)
+                Z := Min(X.Z, Y.Z)
+
+    RangeFloat<public> := module:
+        using { /Verse.org/Random }
+
+        range_float<public> := struct<concrete><computes>:
+            @editable
+            Minimum<public>:float = 0.0
+            @editable
+            Maximum<public>:float = 1.0
+
+        (InRangeFloat:range_float).GetRandomFloat<public>()<transacts>:float=
+            GetRandomFloat(InRangeFloat.Minimum, InRangeFloat.Maximum)
+
+    Message<public> := module:
+        AgentToMessage<public><localizes>(InAgent:agent):message="{InAgent}"

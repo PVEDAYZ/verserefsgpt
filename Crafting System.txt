@@ -1,0 +1,1083 @@
+using { /Fortnite.com/Devices }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/UI }
+using { /Verse.org/Assets }
+using { /Fortnite.com/UI }
+using { /Verse.org/Colors }
+using { /UnrealEngine.com/Temporary/SpatialMath }
+using { /Verse.org/Random }
+
+<#
+Created by: 
+# ░█▀▄░█░█░█▀▀░█░█░█▄█░█▀█░█▀█░█▀▀░▀█▀░▀▀█░█▀▄
+# ░█▀▄░█░█░█░░░█▀▄░█░█░█░█░█░█░▀▀█░░█░░░▀▄░█▀▄
+# ░▀▀░░▀▀▀░▀▀▀░▀░▀░▀░▀░▀▀▀░▀░▀░▀▀▀░░▀░░▀▀░░▀░▀
+x.com/kbuckmaster
+Free to use, don't be lame and try to sell this
+
+INSTRUCTIONS:
+
+Setup these Devices:
+- Create a conditional buttons for any ingredients you want. This includes weapons, items/consumables, materials, gold, anything on a conditional button
+- 1 key item per conditional button for several reasons:
+    - So we can track and display on the UI which items a player has (normal rarity colors) and which they don't (Muted red colors)
+    - So we can mix and match ingredients at will for other recipes
+- Setup an item_spawner_device with all of your possible rewards.  Keep track of the array index for those rewards, you are going to need them
+    - Note, I set up item_spawner_device reference for every reward so you could use more than one if you wanted 
+- Setup a test button_device so you can toggle the UI off and on for testing (select it in the details settings for this device)
+- Setup a bunch of item spawners that have all of your ingredients on them so you can test this device
+- Go to Fortnite.gg and grab images for any of your ingredients and import into your project's Content folder
+
+Assuming you've already built your verse...
+
+Device Details Panel
+- Set your Iventory Toggle Button
+- Add a Recipe to the array 
+    - Recipe Name 
+    - Add 1 to 6 ingredients 
+        - Specify ingredient conditional button
+        - Specify ingredient texture you grabbed from Fortnite.gg
+        - Set name keep it succinct, you have limited characters
+        - Set your item's rarity from the drop down. This is just for border/bg color
+    - Reward
+        - Set item_granter_device reference
+        - Set the array index where your reward is on the item_granter_device
+        - Specify reward texture you grabbed from Fortnite.gg
+        - Set reward name keep it succinct, you have limited characters
+        - Set reward description. I debated just removing this, but it gives you a little extra text to describe reward
+        - Set reward's rarity from the drop down. This is just for border/bg color
+
+- Repeat as many times as you want. You can use the same ingredients in different crafting
+    - The UI updates once an item has been crafted to indicate if you still have the proper ingredients to craft
+
+Note: To keep this quick, I'm creating all of the recipes when the UI is shown and then hiding/showing via the pagination. 
+
+#>
+
+item_rarity := enum:
+    Common
+    Uncommon
+    Rare
+    Epic
+    Legendary
+    Mythic
+    Exotic
+
+ingredient := class<concrete>:
+    @editable
+    ConditionalButton : conditional_button_device = conditional_button_device{}  # The conditional button device that checks if the player has the required items
+    @editable
+    AssetRef : texture = ExampleTextures.wrench  # The texture/image displayed for this ingredient
+    @editable
+    Name : string = ""  # The display name of the ingredient
+    @editable
+    Rarity : item_rarity = item_rarity.Common  # The rarity of the ingredient (sets border and background colors)
+
+reward_info := class<concrete>:
+    @editable
+    ItemGranter : item_granter_device = item_granter_device{}  # The item granter device that gives the reward to the player
+    @editable
+    ItemIndex : int = 0  # The index of the item in the item granter to grant
+    @editable
+    AssetRef : texture = ExampleTextures.wrench  # The texture/image displayed for this reward
+    @editable
+    Name : string = ""  # The display name of the reward
+    @editable
+    Description : string = ""  # The description text shown below the reward
+    @editable
+    Rarity : item_rarity = item_rarity.Common  # The rarity of the reward (sets border and background colors)
+
+crafting_recipe := class<concrete>:
+    @editable
+    RecipeName : string = ""  # The name of the recipe displayed in the UI
+    @editable
+    Ingredients : []ingredient = array{}  # The list of ingredients required for this recipe
+    @editable
+    Reward : reward_info = reward_info{}  # The reward given when the recipe is crafted
+
+crafting_system_device := class(creative_device):
+
+    @editable
+    Recipes : []crafting_recipe = array{}  # The list of all crafting recipes available in the system
+    @editable
+    InventoryToggleButton : button_device = button_device{}  # The button device players interact with to open the crafting UI
+
+    RecipesPerPage : int = 2  # The number of recipes displayed per page (default: 2)
+
+    
+    # [0] is border color, [1] is BG color
+    RarityColors : [][]color = array{
+        array{MakeColorFromHex("F2F2F2"), MakeColorFromHex("B3B3B3")},   # common - border brighter, bg darker
+        array{MakeColorFromHex("2EE14D"), MakeColorFromHex("15782A")},   # uncommon - border brighter, bg darker
+        array{MakeColorFromHex("4A93FF"), MakeColorFromHex("1552A3")},   # rare - border brighter, bg darker
+        array{MakeColorFromHex("C55BFF"), MakeColorFromHex("4B2A6B")},   # epic - border brighter, bg darker
+        array{MakeColorFromHex("FFA03C"), MakeColorFromHex("9F6B18")},   # legendary - border brighter, bg darker
+        array{MakeColorFromHex("FFEF33"), MakeColorFromHex("A88F00")},   # mythic - border brighter, bg darker
+        array{MakeColorFromHex("1AEFFF"), MakeColorFromHex("006B9F")}    # exotic - border brighter, bg darker
+    }
+
+    # Localize helper
+    MakeMessage<localizes>(Text:string):message = "{Text}"
+
+    # Convert rarity enum to array index
+    GetRarityIndex(Rarity:item_rarity):int =
+        case(Rarity):
+            item_rarity.Common => 0
+            item_rarity.Uncommon => 1
+            item_rarity.Rare => 2
+            item_rarity.Epic => 3
+            item_rarity.Legendary => 4
+            item_rarity.Mythic => 5
+            item_rarity.Exotic => 6
+
+    # Get border color for a rarity index
+    GetRarityBorderColor(RarityIndex:int):color =
+        if (RarityPair := RarityColors[RarityIndex], BorderColor := RarityPair[0]):
+            BorderColor
+        else:
+            NamedColors.Black
+
+    # Get background color for a rarity index
+    GetRarityBGColor(RarityIndex:int):color =
+        if (RarityPair := RarityColors[RarityIndex], BGColor := RarityPair[1]):
+            BGColor
+        else:
+            NamedColors.DarkGray
+
+    # Ingredient widget builder - 96x96 size with name, with optional HasItems check for color
+    # Structure: Vertical stack with 2 slots:
+    #   Slot 1: Overlay with 4 layers (border/background/texture/red fade if missing)
+    #   Slot 2: Text label below the icon
+    CreateIngredientWidget(Ingredient:ingredient, HasItems:logic):widget =
+        SelectedTexture := Ingredient.AssetRef
+
+        RarityIndex := GetRarityIndex(Ingredient.Rarity)
+        var BorderColor : color = GetRarityBorderColor(RarityIndex)
+        var BGColor : color = GetRarityBGColor(RarityIndex)
+        
+        # Red fade overlay color block - will be set to visible only when player doesn't have item
+        RedFadeBlock := color_block{
+            DefaultColor := MakeColorFromHex("990000"),
+            DefaultOpacity := 0.5
+        }
+        
+        # If player doesn't have this ingredient, use red colors instead
+        if (HasItems = false):
+            set BorderColor = MakeColorFromHex("CC0000")  # Dark red border
+            set BGColor = MakeColorFromHex("990000")      # Red background
+            # Red fade layer already visible with 0.2 opacity
+        else:
+            # Hide red fade overlay by setting opacity to 0 when player has the item
+            RedFadeBlock.SetOpacity(0.0)
+
+        stack_box{
+            Orientation := orientation.Vertical,
+            Slots := array{
+                # Slot 1: Icon area with 4-layer overlay structure
+                stack_box_slot{
+                    Widget := overlay{
+                        Slots := array{
+                            # Layer 1: Border (rarity or red color, 2px padding)
+                            overlay_slot{
+                                Widget := color_block{
+                                    DefaultColor := BorderColor, 
+                                    DefaultOpacity := 1.0,
+                                    DefaultDesiredSize := vector2{X := 96.0, Y := 96.0}
+                                },
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill,
+                                Padding := margin{Left := 2.0, Right := 2.0, Top := 2.0, Bottom := 2.0}
+                            },
+                            # Layer 2: Background (rarity or red color, 5px padding from border)
+                            overlay_slot{
+                                Widget := color_block{
+                                    DefaultColor := BGColor, 
+                                    DefaultOpacity := 1.0
+                                },
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill,
+                                Padding := margin{Left := 5.0, Right := 5.0, Top := 5.0, Bottom := 5.0}
+                            },
+                            # Layer 3: Item texture/icon (1px padding from background)
+                            overlay_slot{
+                                Widget := texture_block{
+                                    DefaultImage := SelectedTexture
+                                },
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill,
+                                Padding := margin{Left := 1.0, Right := 1.0, Top := 1.0, Bottom := 1.0}
+                            },
+                            # Layer 4: Red fade overlay (only visible when player doesn't have ingredient)
+                            overlay_slot{
+                                Widget := RedFadeBlock,
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill,
+                                Padding := margin{Left := 5.0, Right := 5.0, Top := 5.0, Bottom := 5.0}
+                            }
+                        }
+                    },
+                    HorizontalAlignment := horizontal_alignment.Center
+                },
+                # Slot 2: Ingredient name label below the icon
+                stack_box_slot{
+                    Widget := text_block{
+                        DefaultText := MakeMessage(Ingredient.Name),
+                        DefaultTextSize := 12.0,
+                        DefaultTextColor := NamedColors.White
+                    },
+                    HorizontalAlignment := horizontal_alignment.Center,
+                    VerticalAlignment := vertical_alignment.Center,
+                    Padding := margin{Left := 0.0, Right := 0.0, Top := 5.0, Bottom := 5.0}
+                }
+            }
+        }
+
+    # Reward widget builder - 126x126 size with name and description
+    # Structure: Vertical stack with 3 slots:
+    #   Slot 1: Overlay with 3 layers (border/background/texture) for icon
+    #   Slot 2: Reward name text
+    #   Slot 3: Description box overlay with 3 layers (black bg/white highlight/text)
+    CreateRewardWidget(Reward:reward_info):widget =
+        SelectedTexture := Reward.AssetRef
+
+        RarityIndex := GetRarityIndex(Reward.Rarity)
+        BorderColor := GetRarityBorderColor(RarityIndex)
+        BGColor := GetRarityBGColor(RarityIndex)
+
+        stack_box{
+            Orientation := orientation.Vertical,
+            Slots := array{
+                # Slot 1: Icon area with 3-layer overlay structure
+                stack_box_slot{
+                    Widget := overlay{
+                        Slots := array{
+                            # Layer 1: Rarity border (2px padding)
+                            overlay_slot{
+                                Widget := color_block{
+                                    DefaultColor := BorderColor, 
+                                    DefaultOpacity := 1.0,
+                                    DefaultDesiredSize := vector2{X := 126.0, Y := 126.0}
+                                },
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill,
+                                Padding := margin{Left := 2.0, Right := 2.0, Top := 2.0, Bottom := 2.0}
+                            },
+                            # Layer 2: Rarity background (5px padding from border)
+                            overlay_slot{
+                                Widget := color_block{DefaultColor := BGColor, DefaultOpacity := 1.0},
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill,
+                                Padding := margin{Left := 5.0, Right := 5.0, Top := 5.0, Bottom := 5.0}
+                            },
+                            # Layer 3: Item texture/icon (1px padding from background)
+                            overlay_slot{
+                                Widget := texture_block{
+                                    DefaultImage := SelectedTexture
+                                },
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill,
+                                Padding := margin{Left := 1.0, Right := 1.0, Top := 1.0, Bottom := 1.0}
+                            }
+                        }
+                    },
+                    HorizontalAlignment := horizontal_alignment.Center
+                },
+                # Slot 2: Reward name label
+                stack_box_slot{
+                    Widget := text_block{
+                        DefaultText := MakeMessage(Reward.Name),
+                        DefaultTextSize := 14.0,
+                        DefaultTextColor := NamedColors.White
+                    },
+                    HorizontalAlignment := horizontal_alignment.Center,
+                    VerticalAlignment := vertical_alignment.Center,
+                    Padding := margin{Left := 0.0, Right := 0.0, Top := 5.0, Bottom := 5.0}
+                },
+                # Slot 3: Description box with 3-layer overlay
+                stack_box_slot{
+                    Widget := overlay{
+                        Slots := array{
+                            # Layer 1: Dark background (black 0.5 opacity)
+                            overlay_slot{
+                                Widget := color_block{
+                                    DefaultColor := NamedColors.Black,
+                                    DefaultOpacity := 0.5,
+                                    DefaultDesiredSize := vector2{X := 150.0, Y := 0.0}
+                                },
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill
+                            },
+                            # Layer 2: Subtle highlight (white 0.05 opacity, 2px padding)
+                            overlay_slot{
+                                Widget := color_block{DefaultColor := NamedColors.White, DefaultOpacity := 0.05},
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill,
+                                Padding := margin{Left := 2.0, Right := 2.0, Top := 2.0, Bottom := 2.0}
+                            },
+                            # Layer 3: Description text (centered with padding)
+                            overlay_slot{
+                                Widget := text_block{DefaultText := MakeMessage(Reward.Description), DefaultTextColor := NamedColors.White, DefaultTextSize := 12.0},
+                                HorizontalAlignment := horizontal_alignment.Center,
+                                VerticalAlignment := vertical_alignment.Center,
+                                Padding := margin{Left := 10.0, Right := 10.0, Top := 5.0, Bottom := 5.0}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    # Recipe header widget - displays recipe name with dark background
+    # Structure: Overlay with 3 layers (transparent base/dark bg/text)
+    CreateRecipeHeader(Name:string):widget =
+        overlay{
+            Slots := array{
+                # Layer 1: Transparent base layer (for sizing)
+                overlay_slot{
+                    Widget := color_block{DefaultColor := NamedColors.Black, DefaultOpacity := 0.0},
+                    HorizontalAlignment := horizontal_alignment.Fill,
+                    VerticalAlignment := vertical_alignment.Fill
+                },
+                # Layer 2: Dark background (black 0.3 opacity, 4px padding)
+                overlay_slot{
+                    Widget := color_block{DefaultColor := NamedColors.Black, DefaultOpacity := 0.3},
+                    HorizontalAlignment := horizontal_alignment.Fill,
+                    VerticalAlignment := vertical_alignment.Fill,
+                    Padding := margin{Left := 4.0, Right := 4.0, Top := 4.0, Bottom := 4.0}
+                },
+                # Layer 3: Recipe name text (left-aligned)
+                overlay_slot{
+                    Widget := text_block{
+                        DefaultText := MakeMessage(Name),
+                        DefaultTextSize := 23.0,
+                        DefaultTextColor := NamedColors.White,
+                        DefaultJustification := text_justification.Left,
+                        DefaultShadowColor := NamedColors.Black,
+                        DefaultShadowOffset := option{vector2{X := 2.0, Y := 2.0}},
+                        DefaultShadowOpacity := 0.6},
+                    HorizontalAlignment := horizontal_alignment.Left,
+                    VerticalAlignment := vertical_alignment.Center,
+                    Padding := margin{Left := 10.0, Right := 10.0, Top := 2.0, Bottom := 2.0}
+                }
+            }
+        }
+
+    # Craft button - right aligned, button_regular if ingredients unavailable
+    # Structure: Horizontal stack with 2 slots (spacer/button)
+    CreateCraftButton(Recipe:crafting_recipe, AllIngredientsAvailable:logic):widget =
+        if (AllIngredientsAvailable = true):
+            NewCraftButton := button_loud{DefaultText := MakeMessage("Craft")}
+            set CraftButtons = CraftButtons + array{NewCraftButton}
+            if (set RecipeButtonMap[NewCraftButton] = Recipe) {}
+            NewCraftButton.OnClick().Subscribe(OnCraftButton)
+            
+            stack_box{
+                Orientation := orientation.Horizontal,
+                Slots := array{
+                    # Slot 1: Active craft button (clickable)
+                    stack_box_slot{
+                        Widget := NewCraftButton,
+                        HorizontalAlignment := horizontal_alignment.Right,
+                        VerticalAlignment := vertical_alignment.Center
+                    }
+                }
+            }
+        else:
+            RegularButton := button_regular{DefaultText := MakeMessage("Craft")}
+            
+            stack_box{
+                Orientation := orientation.Horizontal,
+                Slots := array{
+                    # Slot 1: Inactive craft button (grayed out, non-clickable)
+                    stack_box_slot{
+                        Widget := RegularButton,
+                        HorizontalAlignment := horizontal_alignment.Right,
+                        VerticalAlignment := vertical_alignment.Center
+                    }
+                }
+            }
+
+    # Recipe row - horizontal ingredient layout: |ingred1|ingred2|...|spacer|reward|spacer|craft button|
+    # Checks each ingredient individually for visual feedback and overall availability for craft button
+    CreateRecipeRow(Recipe : crafting_recipe, RecipeIndex:int, Agent:agent)<suspends>:widget =
+        var IngredientSlots : []stack_box_slot = array{}
+        var AllIngredientsAvailable : logic = true
+        
+        for (Index -> Ingredient : Recipe.Ingredients):
+            # Only add ingredient widget if it has a name or is the first ingredient
+            if (Index = 0 or Ingredient.Name.Length > 0):
+                # Check this ingredient's button individually for visual feedback
+                var HasItems : logic = false
+                
+                # Use a transacts block to check the button
+                block:
+                    if (Ingredient.ConditionalButton.HasAllItems[Agent]):
+                        set HasItems = true
+                    else:
+                        set AllIngredientsAvailable = false
+                
+                set IngredientSlots = IngredientSlots + array{
+                    stack_box_slot{
+                        Widget := CreateIngredientWidget(Ingredient, HasItems),
+                        HorizontalAlignment := horizontal_alignment.Left,
+                        VerticalAlignment := vertical_alignment.Top
+                    }
+                }
+        
+        stack_box{
+            Orientation := orientation.Horizontal,
+            Slots := IngredientSlots + array{
+                # Spacer before reward
+                stack_box_slot{
+                    Widget := color_block{
+                        DefaultColor := NamedColors.Black,
+                        DefaultOpacity := 0.0,
+                        DefaultDesiredSize := vector2{X := 25.0, Y := 100.0}
+                    }
+                },
+                # Reward
+                stack_box_slot{
+                    Widget := CreateRewardWidget(Recipe.Reward),
+                    HorizontalAlignment := horizontal_alignment.Right,
+                    VerticalAlignment := vertical_alignment.Top
+                },
+                # Spacer after reward
+                stack_box_slot{
+                    Widget := color_block{
+                        DefaultColor := NamedColors.Black,
+                        DefaultOpacity := 0.0,
+                        DefaultDesiredSize := vector2{X := 25.0, Y := 100.0}
+                    }
+                },
+                # Craft button (quiet if ingredients unavailable)
+                stack_box_slot{
+                    Widget := CreateCraftButton(Recipe, AllIngredientsAvailable),
+                    HorizontalAlignment := horizontal_alignment.Right,
+                    VerticalAlignment := vertical_alignment.Center
+                }
+            }
+        }
+
+    # Title bar widget - displays "Crafting System" header
+    # Structure: Overlay with 2 layers (subtle background/title text)
+    CreateTitleBar():widget =
+        overlay{
+            Slots := array{
+                # Layer 1: Subtle dark background (black 0.1 opacity)
+                overlay_slot{
+                    Widget := color_block{DefaultColor := NamedColors.Black, DefaultOpacity := 0.1},
+                    HorizontalAlignment := horizontal_alignment.Fill,
+                    VerticalAlignment := vertical_alignment.Fill
+                },
+                # Layer 2: Title text (centered, large font)
+                overlay_slot{
+                    Widget := text_block{
+                        DefaultText := MakeMessage("Crafting System"),
+                        DefaultTextSize := 34.0,
+                        DefaultTextColor := NamedColors.White,
+                        DefaultShadowColor := NamedColors.Black,
+                        DefaultShadowOffset := option{vector2{X := 2.0, Y := 2.0}},
+                        DefaultShadowOpacity := 0.6
+                    },
+                    HorizontalAlignment := horizontal_alignment.Center,
+                    VerticalAlignment := vertical_alignment.Center,
+                    Padding := margin{Left := 0.0, Right := 0.0, Top := 5.0, Bottom := 5.0}
+                }
+            }
+        }
+
+    # Button tray with close button - bottom of UI
+    # Structure: 3 slots (left spacer/close button/right spacer) with distribution
+    CreateButtonTray(Agent:agent):widget =
+        NewCloseButton := button_loud{
+            DefaultText := MakeMessage("Close")
+        }
+        set CloseButton = option{NewCloseButton}
+        NewCloseButton.OnClick().Subscribe(OnCloseButton)
+        
+        stack_box{
+            Orientation := orientation.Horizontal,
+            Slots := array{
+                # Slot 1: Left spacer
+                stack_box_slot{
+                    Widget := color_block{
+                        DefaultColor := NamedColors.Black,
+                        DefaultOpacity := 0.0
+                    },
+                    HorizontalAlignment := horizontal_alignment.Fill,
+                    VerticalAlignment := vertical_alignment.Center
+                },
+                # Slot 2: Close button (middle) with distribution
+                stack_box_slot{
+                    Widget := NewCloseButton,
+                    HorizontalAlignment := horizontal_alignment.Center,
+                    VerticalAlignment := vertical_alignment.Center,
+                    Distribution := option{2.0}
+                },
+                # Slot 3: Right spacer
+                stack_box_slot{
+                    Widget := color_block{
+                        DefaultColor := NamedColors.Black,
+                        DefaultOpacity := 0.0
+                    },
+                    HorizontalAlignment := horizontal_alignment.Fill,
+                    VerticalAlignment := vertical_alignment.Center
+                }
+            }
+        }
+
+    # Pagination bar - shows PREV/page counter/NEXT buttons
+    # Structure: 3 slots (prev button/page text/next button) with distribution
+    # Buttons are always created but visibility is controlled dynamically
+    CreatePaginationBar():widget =
+        # Calculate total pages: ceiling of (total recipes / recipes per page)
+        TotalRecipes := Recipes.Length
+        var TotalPages : int = 1
+        var RecipesAccounted : int = 0
+        loop:
+            set RecipesAccounted = TotalPages * RecipesPerPage
+            if (RecipesAccounted >= TotalRecipes):
+                break
+            set TotalPages = TotalPages + 1
+        
+        # Create page counter text (1-indexed for display)
+        PageText := "Page {CurrentPage + 1} of {TotalPages}"
+        PageTextBlock := text_block{
+            DefaultText := MakeMessage(PageText),
+            DefaultTextSize := 30.0,
+            DefaultTextColor := NamedColors.White,
+            DefaultJustification := text_justification.Center,
+            DefaultShadowColor := NamedColors.Black,
+            DefaultShadowOffset := option{vector2{X := 2.0, Y := 2.0}},
+            DefaultShadowOpacity := 0.6
+        }
+        set PageCounterText = option{PageTextBlock}
+        
+        # Always create PREV button
+        NewPrevButton := button_loud{DefaultText := MakeMessage("PREV")}
+        set PrevButtonWidget = option{NewPrevButton}
+        NewPrevButton.OnClick().Subscribe(OnPrevPage)
+        
+        # Set initial visibility based on current page
+        if (CurrentPage > 0):
+            NewPrevButton.SetVisibility(widget_visibility.Visible)
+        else:
+            NewPrevButton.SetVisibility(widget_visibility.Collapsed)
+        
+        # Always create NEXT button
+        NewNextButton := button_loud{DefaultText := MakeMessage("NEXT")}
+        set NextButtonWidget = option{NewNextButton}
+        NewNextButton.OnClick().Subscribe(OnNextPage)
+        
+        # Set initial visibility based on current page
+        if (CurrentPage < TotalPages - 1):
+            NewNextButton.SetVisibility(widget_visibility.Visible)
+        else:
+            NewNextButton.SetVisibility(widget_visibility.Collapsed)
+        
+        stack_box{
+            Orientation := orientation.Horizontal,
+            Slots := array{
+                # Slot 1: PREV button area (overlay maintains size)
+                stack_box_slot{
+                    Widget := overlay{
+                        Slots := array{
+                            # Background color block for sizing
+                            overlay_slot{
+                                Widget := color_block{
+                                    DefaultColor := NamedColors.Black,
+                                    DefaultOpacity := 0.0
+                                },
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill
+                            },
+                            # Actual PREV button
+                            overlay_slot{
+                                Widget := NewPrevButton,
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill
+                            }
+                        }
+                    },
+                    HorizontalAlignment := horizontal_alignment.Left,
+                    VerticalAlignment := vertical_alignment.Center,
+                    Distribution := option{1.0}
+                },
+                # Slot 2: Page counter area (overlay maintains size)
+                stack_box_slot{
+                    Widget := overlay{
+                        Slots := array{
+                            # Background color block for sizing
+                            overlay_slot{
+                                Widget := color_block{
+                                    DefaultColor := NamedColors.Black,
+                                    DefaultOpacity := 0.0
+                                },
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill
+                            },
+                            # Actual page text
+                            overlay_slot{
+                                Widget := PageTextBlock,
+                                HorizontalAlignment := horizontal_alignment.Center,
+                                VerticalAlignment := vertical_alignment.Center
+                            }
+                        }
+                    },
+                    HorizontalAlignment := horizontal_alignment.Center,
+                    VerticalAlignment := vertical_alignment.Center,
+                    Distribution := option{2.0}
+                },
+                # Slot 3: NEXT button area (overlay maintains size)
+                stack_box_slot{
+                    Widget := overlay{
+                        Slots := array{
+                            # Background color block for sizing
+                            overlay_slot{
+                                Widget := color_block{
+                                    DefaultColor := NamedColors.Black,
+                                    DefaultOpacity := 0.0
+                                },
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill
+                            },
+                            # Actual NEXT button
+                            overlay_slot{
+                                Widget := NewNextButton,
+                                HorizontalAlignment := horizontal_alignment.Fill,
+                                VerticalAlignment := vertical_alignment.Fill
+                            }
+                        }
+                    },
+                    HorizontalAlignment := horizontal_alignment.Right,
+                    VerticalAlignment := vertical_alignment.Center,
+                    Distribution := option{1.0}
+                }
+            }
+        }
+
+    # Recipe UI - proper 3-slot vertical structure
+    CreateRecipeUI(Recipe:crafting_recipe, RecipeIndex:int, Agent:agent)<suspends>:widget =
+        RecipeRowWidget := CreateRecipeRow(Recipe, RecipeIndex, Agent)
+        stack_box{
+            Orientation := orientation.Vertical,
+            Slots := array{
+                # Recipe name area (40px height)
+                stack_box_slot{
+                    Widget := CreateRecipeHeader(Recipe.RecipeName),
+                    HorizontalAlignment := horizontal_alignment.Fill
+                },
+                # Ingredients, reward, and craft button area (all in horizontal row)
+                stack_box_slot{
+                    Widget := RecipeRowWidget,
+                    HorizontalAlignment := horizontal_alignment.Fill
+                }
+            }
+        }
+
+    # Main content area with recipes - paginated list of recipes
+    # Structure: Overlay with 2 layers (subtle background/recipe stack)
+    CreateContentArea(Agent:agent)<suspends>:widget =
+        var RecipeWidgets : []stack_box_slot = array{}
+        
+        # Calculate pagination range
+        StartIndex := CurrentPage * RecipesPerPage
+        TempEnd := (CurrentPage + 1) * RecipesPerPage
+        EndIndex := if (TempEnd > Recipes.Length) then Recipes.Length else TempEnd
+        
+        # Build recipes for current page only
+        for (RecipeIndex := StartIndex..EndIndex - 1):
+            if (Recipe := Recipes[RecipeIndex]):
+                RecipeWidget := CreateRecipeUI(Recipe, RecipeIndex, Agent)
+                set RecipeWidgets = RecipeWidgets + array{
+                    stack_box_slot{
+                        Widget := stack_box{
+                            Orientation := orientation.Vertical,
+                            Slots := array{
+                                # Recipe UI
+                                stack_box_slot{
+                                    Widget := RecipeWidget
+                                },
+                                # Spacer below recipe (20px height)
+                                stack_box_slot{
+                                    Widget := color_block{
+                                        DefaultColor := NamedColors.Black,
+                                        DefaultOpacity := 0.0,
+                                        DefaultDesiredSize := vector2{X := 100.0, Y := 20.0}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+        
+        RecipeStack := stack_box{
+            Orientation := orientation.Vertical,
+            Slots := RecipeWidgets
+        }
+        set ContentStackBox = option{RecipeStack}
+        
+        # Track recipe widgets for later removal
+        for (Slot : RecipeWidgets):
+            set RecipeRowWidgets = RecipeRowWidgets + array{Slot.Widget}
+        
+        overlay{
+            Slots := array{
+                # Layer 1: Subtle background tint (light gray 0.1 opacity)
+                overlay_slot{
+                    Widget := color_block{
+                        DefaultColor := NamedColors.LightGray,
+                        DefaultOpacity := 0.1
+                    },
+                    HorizontalAlignment := horizontal_alignment.Fill,
+                    VerticalAlignment := vertical_alignment.Fill,
+                    Padding := margin{Left := 0.0, Right := 0.0, Top := 10.0, Bottom := 0.0}
+                },
+                # Layer 2: Vertical stack of all recipes (with padding)
+                overlay_slot{
+                    Widget := RecipeStack,
+                    HorizontalAlignment := horizontal_alignment.Fill,
+                    VerticalAlignment := vertical_alignment.Fill,
+                    Padding := margin{Left := 10.0, Right := 10.0, Top := 35.0, Bottom := 10.0}
+                }
+            }
+        }
+
+    # Main crafting UI builder - assembles title, content, pagination, and button tray
+    # Structure: Vertical stack with 4 slots (title bar/content area/pagination bar/button tray)
+    CreateCraftingUI(Agent:agent)<suspends>:widget =
+        ContentWidget := CreateContentArea(Agent)
+        PaginationBarWidget := CreatePaginationBar()
+        
+        # Wrap pagination bar in overlay with background
+        PaginationWithBG := overlay{
+            Slots := array{
+                # Layer 1: Background color (black 0.1 opacity)
+                overlay_slot{
+                    Widget := color_block{
+                        DefaultColor := NamedColors.Black,
+                        DefaultOpacity := 0.1
+                    },
+                    HorizontalAlignment := horizontal_alignment.Fill,
+                    VerticalAlignment := vertical_alignment.Fill
+                },
+                # Layer 2: Pagination bar widget
+                overlay_slot{
+                    Widget := PaginationBarWidget,
+                    HorizontalAlignment := horizontal_alignment.Fill,
+                    VerticalAlignment := vertical_alignment.Fill,
+                    Padding := margin{Left := 10.0, Right := 10.0, Top := 10.0, Bottom := 10.0}
+                }
+            }
+        }
+        
+        MainStack := stack_box{
+            Orientation := orientation.Vertical,
+            Slots := array{
+                # Slot 1: Title bar at top ("Crafting System" header)
+                stack_box_slot{
+                    Widget := CreateTitleBar(),
+                    HorizontalAlignment := horizontal_alignment.Fill
+                },
+                # Slot 2: Main content area with paginated recipes (fills remaining space)
+                stack_box_slot{
+                    Widget := ContentWidget,
+                    HorizontalAlignment := horizontal_alignment.Fill,
+                    VerticalAlignment := vertical_alignment.Fill
+                },
+                # Slot 3: Pagination bar with background (PREV/page counter/NEXT)
+                stack_box_slot{
+                    Widget := PaginationWithBG,
+                    HorizontalAlignment := horizontal_alignment.Fill
+                },
+                # Slot 4: Button tray at bottom (close button)
+                stack_box_slot{
+                    Widget := CreateButtonTray(Agent),
+                    HorizontalAlignment := horizontal_alignment.Fill
+                }
+            }
+        }
+        
+        # Store references for pagination updates
+        set PaginationWidget = option{PaginationBarWidget}
+        set MainCraftingStack = option{MainStack}
+        MainStack
+
+    # UI state management
+    var UICanvas : ?canvas = false
+    var IsUIVisible : logic = false
+    var CloseButton : ?button_loud = false
+    var CraftButtons : []button_loud = array{}
+    var RecipeButtonMap : [button_loud]crafting_recipe = map{}
+    var CurrentPlayerUI : ?player_ui = false
+    var CurrentAgent : ?agent = false
+    var ContentStackBox : ?stack_box = false  # Container for recipe rows
+    var RecipeRowWidgets : []widget = array{}  # Track current recipe rows
+    var PaginationStackBox : ?stack_box = false  # Container for pagination bar
+    var PageCounterText : ?text_block = false  # Page counter text widget
+    var MainCraftingStack : ?stack_box = false  # Main UI container with all 4 slots
+    var PaginationWidget : ?widget = false  # Current pagination widget reference
+    
+    # Pagination state
+    var CurrentPage : int = 0
+    var PrevButtonWidget : ?button_loud = false
+    var NextButtonWidget : ?button_loud = false
+
+    # Toggle UI visibility
+    ToggleCraftingUI(Agent:agent)<suspends>:void =
+        if (IsUIVisible?):
+            HideCraftingUI(Agent)
+        else:
+            ShowCraftingUI(Agent)
+
+    # Show crafting UI - displays main canvas with 3-layer styling
+    # Structure: Canvas with single slot containing overlay with 3 layers (border/background/content)
+    ShowCraftingUI(Agent:agent)<suspends>:void =
+        if (Player := player[Agent], PlayerUI := GetPlayerUI[Player]):
+            set CurrentPlayerUI = option{PlayerUI}
+            set CurrentAgent = option{Agent}
+            # Build UI with ingredient checks happening during creation
+            CraftingWidget := CreateCraftingUI(Agent)
+            NewCanvas := canvas{
+                Slots := array{
+                    canvas_slot{
+                        Widget := overlay{
+                            Slots := array{
+                                # Layer 1: Outer border (cyan color #03b8ec, 0.5 opacity)
+                                overlay_slot{
+                                    Widget := color_block{
+                                        DefaultColor := MakeColorFromHex("03b8ec"),
+                                        DefaultOpacity := 0.5
+                                    },
+                                    HorizontalAlignment := horizontal_alignment.Fill,
+                                    VerticalAlignment := vertical_alignment.Fill
+                                },
+                                # Layer 2: Background panel (blue #0c57b1, 5px padding from border)
+                                overlay_slot{
+                                    Widget := color_block{
+                                        DefaultColor := MakeColorFromHex("0c57b1"),
+                                        DefaultOpacity := 1.0
+                                    },
+                                    HorizontalAlignment := horizontal_alignment.Fill,
+                                    VerticalAlignment := vertical_alignment.Fill,
+                                    Padding := margin{Left := 5.0, Right := 5.0, Top := 5.0, Bottom := 5.0}
+                                },
+                                # Layer 3: Content widget (15px padding from background)
+                                overlay_slot{
+                                    Widget := CraftingWidget,
+                                    HorizontalAlignment := horizontal_alignment.Fill,
+                                    VerticalAlignment := vertical_alignment.Fill,
+                                    Padding := margin{Left := 15.0, Right := 15.0, Top := 15.0, Bottom := 15.0}
+                                }
+                            }
+                        },
+                        # Canvas positioned at center of screen, slightly taller
+                        Anchors := anchors{Minimum := vector2{X := 0.23, Y := 0.14}, Maximum := vector2{X := 0.77, Y := 0.86}},
+                        Offsets := margin{Left := 0.0, Top := 0.0, Right := 0.0, Bottom := 0.0}
+                    }
+                }
+            }
+            PlayerUI.AddWidget(NewCanvas, player_ui_slot{InputMode := ui_input_mode.All})
+            set UICanvas = option{NewCanvas}
+            set IsUIVisible = true
+
+    # Hide crafting UI
+    HideCraftingUI(Agent:agent):void =
+        if (Player := player[Agent], PlayerUI := GetPlayerUI[Player]):
+            if (Canvas := UICanvas?):
+                PlayerUI.RemoveWidget(Canvas)
+                set UICanvas = false
+                set IsUIVisible = false
+                set CloseButton = false
+                set CraftButtons = array{}
+                set RecipeButtonMap = map{}
+                set PrevButtonWidget = false
+                set NextButtonWidget = false
+                set CurrentPage = 0
+                set CurrentPlayerUI = false
+                set CurrentAgent = false
+                set ContentStackBox = false
+                set RecipeRowWidgets = array{}
+                set PaginationStackBox = false
+                set PageCounterText = false
+                set MainCraftingStack = false
+                set PaginationWidget = false
+
+    # Refresh crafting UI after successful craft
+    RefreshCraftingUI(Agent:agent)<suspends>:void =
+        if (IsUIVisible?):
+            HideCraftingUI(Agent)
+            ShowCraftingUI(Agent)
+    
+    # Update pagination bar with current page state
+    UpdatePaginationBar():void =
+        # Calculate total pages
+        TotalRecipes := Recipes.Length
+        var TotalPages : int = 1
+        var RecipesAccounted : int = 0
+        loop:
+            set RecipesAccounted = TotalPages * RecipesPerPage
+            if (RecipesAccounted >= TotalRecipes):
+                break
+            set TotalPages = TotalPages + 1
+        
+        # Update page counter text
+        if (PageText := PageCounterText?):
+            PageText.SetText(MakeMessage("Page {CurrentPage + 1} of {TotalPages}"))
+        
+        # Update PREV button visibility
+        if (Prev := PrevButtonWidget?):
+            if (CurrentPage > 0):
+                Prev.SetVisibility(widget_visibility.Visible)
+            else:
+                Prev.SetVisibility(widget_visibility.Collapsed)
+        
+        # Update NEXT button visibility
+        if (Next := NextButtonWidget?):
+            if (CurrentPage < TotalPages - 1):
+                Next.SetVisibility(widget_visibility.Visible)
+            else:
+                Next.SetVisibility(widget_visibility.Collapsed)
+    
+    # Update UI content for pagination (rebuilds only recipe rows, keeps canvas intact)
+    UpdatePaginationContent()<suspends>:void =
+        if (Agent := CurrentAgent?, StackBox := ContentStackBox?, IsUIVisible?):
+            # Remove all existing recipe row widgets from container
+            for (RowWidget : RecipeRowWidgets):
+                StackBox.RemoveWidget(RowWidget)
+            
+            # Clear existing button references
+            set CraftButtons = array{}
+            set RecipeButtonMap = map{}
+            set RecipeRowWidgets = array{}
+            
+            # Calculate pagination range
+            StartIndex := CurrentPage * RecipesPerPage
+            TempEnd := (CurrentPage + 1) * RecipesPerPage
+            EndIndex := if (TempEnd > Recipes.Length) then Recipes.Length else TempEnd
+            
+            # Build NEW recipe widgets for current page
+            for (RecipeIndex := StartIndex..EndIndex - 1):
+                if (Recipe := Recipes[RecipeIndex]):
+                    RecipeWidget := CreateRecipeUI(Recipe, RecipeIndex, Agent)
+                    RecipeRowContainer := stack_box{
+                        Orientation := orientation.Vertical,
+                        Slots := array{
+                            # Recipe UI
+                            stack_box_slot{
+                                Widget := RecipeWidget
+                            },
+                            # Spacer below recipe (20px height)
+                            stack_box_slot{
+                                Widget := color_block{
+                                    DefaultColor := NamedColors.Black,
+                                    DefaultOpacity := 0.0,
+                                    DefaultDesiredSize := vector2{X := 100.0, Y := 20.0}
+                                }
+                            }
+                        }
+                    }
+                    
+                    # Add new row to container wrapped in a slot
+                    NewSlot := stack_box_slot{Widget := RecipeRowContainer}
+                    StackBox.AddWidget(NewSlot)
+                    set RecipeRowWidgets = RecipeRowWidgets + array{RecipeRowContainer}
+            
+            # Rebuild pagination bar to show/hide PREV/NEXT buttons
+            UpdatePaginationBar()
+    
+    # Device initialization
+    OnBegin<override>()<suspends>:void =
+        # Connect inventory toggle button
+        InventoryToggleButton.InteractedWithEvent.Subscribe(OnInventoryToggle)
+
+    # Handle inventory toggle button press
+    OnInventoryToggle(Agent:agent):void =
+        spawn:
+            ToggleCraftingUI(Agent)
+
+    # Handle close button press
+    OnCloseButton(Message:widget_message):void =
+        if (Agent := agent[Message.Player]):
+            HideCraftingUI(Agent)
+
+    # Handle previous page button press
+    OnPrevPage(Message:widget_message):void =
+        if (CurrentPage > 0):
+            set CurrentPage = CurrentPage - 1
+            spawn:
+                UpdatePaginationContent()
+
+    # Handle next page button press
+    OnNextPage(Message:widget_message):void =
+        # Calculate total pages
+        TotalRecipes := Recipes.Length
+        var TotalPages : int = 1
+        var RecipesAccounted : int = 0
+        loop:
+            set RecipesAccounted = TotalPages * RecipesPerPage
+            if (RecipesAccounted >= TotalRecipes):
+                break
+            set TotalPages = TotalPages + 1
+        
+        MaxPageIndex := TotalPages - 1
+        if (CurrentPage < MaxPageIndex):
+            set CurrentPage = CurrentPage + 1
+            spawn:
+                UpdatePaginationContent()
+
+    # Check if player has required ingredients using conditional buttons (called when crafting)
+    HasRequiredIngredients(Agent:agent, Recipe:crafting_recipe)<transacts>:logic =
+        var AllIngredientsMet : logic = true
+        
+        # Check each ingredient's conditional button
+        for (Index -> Ingredient : Recipe.Ingredients):
+            # First ingredient is required, others optional if they have a name
+            if (Index = 0 or Ingredient.Name.Length > 0):
+                if (not Ingredient.ConditionalButton.HasAllItems[Agent]):
+                    set AllIngredientsMet = false
+        
+        return AllIngredientsMet
+
+    # Async wrapper for item granting
+    GrantItemAsync(ItemGranter:item_granter_device, ItemIndex:int, Agent:agent)<suspends>:void =
+        ItemGranter.GrantItemIndex(Agent, ItemIndex)
+
+    # Grant reward item to player
+    GrantRewardItem(Agent:agent, Recipe:crafting_recipe)<suspends>:void =
+        RewardInfo := Recipe.Reward
+        spawn:
+            GrantItemAsync(RewardInfo.ItemGranter, RewardInfo.ItemIndex, Agent)
+
+    # Handle craft button press
+    OnCraftButton(Message:widget_message):void =
+        if (Agent := agent[Message.Player]):
+            # Find which button was clicked and get the corresponding recipe
+            if (ClickedButton := button_loud[Message.Source]):
+                if (SelectedRecipe := RecipeButtonMap[ClickedButton]):
+                    # Spawn async process to check ingredients and craft
+                    spawn:
+                        CheckAndCraft(Agent, SelectedRecipe)
+
+    # Check ingredients and craft if possible
+    CheckAndCraft(Agent:agent, Recipe:crafting_recipe)<suspends>:void =
+        # First check ingredients in a transacts context
+        var CanCraft:logic = false
+        
+        block:
+            HasIngredients := HasRequiredIngredients(Agent, Recipe)
+            set CanCraft = HasIngredients
+        
+        # Now proceed with crafting if ingredients are available
+        if (CanCraft = true):
+            # Activate all ingredient conditional buttons
+            for (Index -> Ingredient : Recipe.Ingredients):
+                # Only activate if ingredient is used
+                if (Index = 0 or Ingredient.Name.Length > 0):
+                    Ingredient.ConditionalButton.Activate(Agent)
+            
+            # Grant the reward item
+            GrantRewardItem(Agent, Recipe)
+            
+            # Refresh UI to update ingredient availability
+            RefreshCraftingUI(Agent)

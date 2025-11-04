@@ -1,0 +1,45 @@
+#Handle the event subscriptions and signaling
+generic_event(payload:type):= class(subscribable(payload),signalable(payload)):
+    
+    Subscriptions : generic_subscriptions(payload) 
+
+    Subscribe<override>(Callback:type {_(:payload):void})<transacts>:cancelable=
+        var NewSub: generic_cancelable(payload) = generic_cancelable(payload){ Callback := Callback }
+        var NewSubscriptions : [] generic_cancelable(payload) = Subscriptions.GetSubscriptions()
+        set NewSubscriptions += array{ NewSub }
+        Subscriptions.SetSubscriptions(NewSubscriptions)
+        return NewSub
+
+    Signal<override>(Payload:payload):void=
+        var UncanceledSubscription : [] generic_cancelable(payload) = array{}
+        for(Subscription : Subscriptions.GetSubscriptions(),not Subscription.IsCanceled()?):
+            Subscription.Callback(Payload)
+            set UncanceledSubscription += array{Subscription}
+        Subscriptions.SetSubscriptions(UncanceledSubscription)
+        
+#Handle cancelations
+generic_cancelable(Payload:type):=class(cancelable):
+    
+    Callback: type {_(:Payload):void}
+    Cancelable: base_cancelable = base_cancelable{}
+
+    Cancel<override>()<transacts>:void=
+        Cancelable.Cancel()
+
+    IsCanceled<public>()<transacts>:logic=
+        return Cancelable.IsCanceled()
+
+#Base Cancelable Implementation for generic because we can't use "var" inside Parametric Types for now. 
+base_cancelable<public>:= class(cancelable):
+    var HasBeenCanceled<private>:logic = false
+    
+    Cancel<override>()<transacts>:void=
+        set HasBeenCanceled = true
+
+    IsCanceled<public>()<transacts>:logic=
+        return HasBeenCanceled
+
+#Handle Subscriptions abstraction because again we can't use "var" inside Parametric Types for now.
+generic_subscriptions(t:type):=interface():
+    GetSubscriptions()<transacts>:[]generic_cancelable(t)
+    SetSubscriptions(Subscriptions:[]generic_cancelable(t))<transacts>:void

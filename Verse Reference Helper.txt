@@ -1,0 +1,374 @@
+QUICK VERSE CODE SNIPPETS 
+
+######################################################################################################################
+
+Device := class(creative_device):
+
+######################################################################################################################
+
+@editable
+spawners : []player_spawner_device = array{}
+
+var playerMap : [player]PlayerStats = map{}
+
+######################################################################################################################
+
+OnBegin<override>()<suspends>:void=
+	InitSpawners()
+	InitPlayspace()
+
+######################################################################################################################
+
+InitPlayspace():void=
+  # GetPlayspace().PlayerAddedEvent().Subscribe(OnPlayerAdded) 
+    GetPlayspace().PlayerRemovedEvent().Subscribe(OnPlayerRemoved)
+    	Print("Playspace Initialized")
+
+######################################################################################################################
+
+InitSpawners():void=
+    for(spawner:spawners):
+    	spawner.SpawnedEvent.Subscribe(InitAgent)
+		Print("Spawners Initialized")
+
+######################################################################################################################
+
+InitAgent(Agent:agent):void=
+    SetupStats(Agent)
+	if (Chr := Agent.GetFortCharacter[]):                              
+		Chr.EliminatedEvent().Subscribe(OnElimination)
+
+######################################################################################################################
+
+SetupStats(NewPlayer : agent):void=
+    if (PlayerObj := player[NewPlayer]):
+         if (PlayerExists := playerMap[NewPlayer]):
+             if:
+                 AgentStats := playerMap[PlayerObj]
+             then:
+                 Print("Player stats were previously initialized")
+                 Print("Player Eliminations: {AgentStats.GetElimCount()}")
+             else:
+                 Print("Initalizing new player stats...")
+                 if(set playerMap[PlayerObj] = PlayerStats{}):
+                     if(AgentStats := playerMap[PlayerObj]):
+                         Print("New player's stats initialized")
+
+######################################################################################################################
+
+
+OnPlayerRemoved(PlayerLeave : player): void =
+    if(ActualPlayer := playerMap[PlayerLeave]):
+    var TempPlayerMap: [player]PlayerStats = map{}
+        for (Key -> Value : playerMap, Key <> PlayerLeave):
+            set TempPlayerMap = ConcatenateMaps(TempPlayerMap, map{Key => Value})
+            set playerMap = TempPlayerMap
+
+######################################################################################################################
+
+## Single Session ONLY data persistent class ##
+## Tracks across rounds, but not sessions ##
+## Use with the `OnPlayerRemoved`, `SetupStats`, `InitAgent` functions and the `playerMap` variable ##
+## See `Stat Usage` below for implementation ##
+
+PlayerStats := class<final>:
+    var Elims : int = 0
+    AddElim(i : int): void =
+        set Elims += i
+    GetElimCount(): int =
+        return Elims
+
+######################################################################################################################
+
+
+## Call a function on the eliminated agent and eliminating agent ##
+
+    OnElimination(Elimination:elimination_result): void =
+        Print("Elimination event") 
+        if(Killer := Elimination.EliminatingCharacter?, KillerAgent := Killer.GetInstigatorAgent[]):
+            dosomething(KillerAgent)
+        if(Killed := Elimination.EliminatedCharacter, KilledAgent := Killed.GetInstigatorAgent[]):
+            dosomething(KilledAgent)
+
+######################################################################################################################
+
+## Casting from agent to player ##
+
+ if(Player:=player[Agent]):
+	DoSomething(Player)
+
+ # or can be written/wrapped as:
+
+ if:
+    Player := player[Agent]
+ then:
+    DoSomething(Player)
+
+
+######################################################################################################################
+
+## Gets all agentss AND spectators and sets up to call something on each one ##
+
+Agents := GetPlayspace().GetParticipants()
+	for (Agent : Agents):
+
+######################################################################################################################
+
+## Gets all agents NOT spectators and sets up to call something on each one ##
+
+Agents := GetPlayspace().GetAgents()
+	for (Agent : Agents):
+
+
+######################################################################################################################
+
+## Validate an optional agent ##
+
+# Useful for running a function when a `trigger_device` `TiggeredEvent` event is subscribed to
+
+  OnTriggered(Agent:?agent):void=
+    if (ValidAgent := Agent?):
+         DoSomething(ValidAgent)
+
+# or can be written/wrapped as:
+
+  OnTriggered(Agent:?agent):void=
+    if:
+	ValidAgent := Agent?
+    then:
+         DoSomething(ValidAgent)
+
+
+######################################################################################################################
+
+
+## Making modules ##
+
+# By Megaspace 
+# https://dev.epicgames.com/community/snippets/dxk/fortnite-organizing-code-into-modules
+# You have a sub-folder called Helpers, and a class you want
+# to reference called math_util.
+# In the files using math_util add the following:
+
+
+using { Helpers }
+ 
+# In math_util, make sure any methods, variables or constants
+# you want to expose are public, since default is internal (module only)
+ 
+math_util<public> := class():
+ 
+    PI<public> := 3.141592654
+    SQRT_2<public> := 1.41421356
+    
+    method_a<public>() : void =
+        Print("method_a")
+
+
+
+######################################################################################################################
+
+## Optionals ##
+
+# The following is an example of using an option type to save a reference to a spawned player
+
+my_device := class<concrete>(creative_device):
+    var SavedPlayer : ?player = false # unset optional value
+ 
+    @editable
+    PlayerSpawn : player_spawner_device = player_spawner_device{}
+ 
+    @editable
+    Trigger : trigger_device = trigger_device{}
+ 
+    OnBegin<override>()<suspends>:void =
+        PlayerSpawn.PlayerSpawnedEvent.Subscribe(OnPlayerSpawned)
+ 
+    OnPlayerSpawned(Player : player) : void =
+        set SavedPlayer = option{Player}
+        if (TriggerPlayer := SavedPlayer?): 
+            Trigger.Trigger(TriggerPlayer)
+
+######################################################################################################################
+
+## Error ##  
+
+# This invocation calls a function that has the 'decides' effect, which is not allowed by its context.(3512)
+
+
+
+# Solution: 
+
+
+if (NewPosition := SideChestsPositions[Index]):
+  # do something with NewPosition
+  Print("NewPosition: " + NewPosition);
+
+######################################################################################################################
+
+## Arrays ##
+
+# https://dev.epicgames.com/documentation/en-us/uefn/array-in-verse
+
+# Adding an item to an array
+
+set SideChestsPositions += array{Position};
+
+# Go over an array
+
+for (Index -> Spawner : CreatureSpawners):
+  # do something with Spawner
+  Spawner.Disable();
+
+for (Spawner : CreatureSpawners):
+  Spawner.Disable();
+
+# Get a random element from an array
+
+Index := GetRandomInt(0, CreatureSpawners.Length);
+
+# Remove element form array
+# https://forums.unrealengine.com/t/how-to-remove-an-item-at-index-from-an-array-in-verse/833744
+
+var MyDeviceArray:[]creative_device = array{}
+
+if (NewArray := MyDeviceArray.RemoveElement[0]):
+    set MyDeviceArray = NewArray
+
+######################################################################################################################
+
+## For loop ##
+
+for (i := 1..BankCoinsIncrement):
+  Tracker.Increment(Agent);
+
+######################################################################################################################
+
+## Int with float calculation ##
+
+NewStoreLevel : int = Int[Score * 1.0 / 20.0];
+
+######################################################################################################################
+
+## Float to Int ##
+
+if:
+  IntTime := Int[Time]
+
+######################################################################################################################
+
+## Enum ##
+
+Value := enum_type.Value1;
+
+######################################################################################################################
+
+## Maps ##
+
+# https://dev.epicgames.com/documentation/en-us/uefn/map-in-verse
+
+WordCount : [string]int = map{"apple" => 0, "apple" => 1, "apple" => 2};
+var CanvasMap:[player]canvas = map{};
+
+# Adding an item to a map
+
+set CanvasMap = ConcatenateMaps(CanvasMap, map{Player => Canvas});
+
+# Recall
+
+if (Canvas := CanvasMap[Player]):
+  PlayerUI.RemoveWidget(Canvas);
+
+# Removes an element from the given map and returns a new map without that element
+
+RemoveKeyFromMap(ExampleMap:[player]canvas, ElementToRemove:player):[player]canvas=
+  var NewMap:[player]canvas = map{}
+
+ # Concatenate Keys from ExampleMap into NewMap, excluding ElementToRemove
+
+  for (Key -> Value : ExampleMap, Key <> ElementToRemove):
+      set NewMap = ConcatenateMaps(NewMap, map{Key => Value})
+  return NewMap
+
+######################################################################################################################
+
+## Events ##
+
+# https://dev.epicgames.com/documentation/en-us/uefn/verse-api/versedotorg/verse/event/event
+
+# Subscribing to an event
+
+EliminationManager.EliminatedEvent.Subscribe(OnCreatureEliminated);
+
+# Declaring an event
+
+CountdownEndedEvent<public> : event() = event(){}
+
+# With parameter
+
+CountdownEndedEvent<public> : event(float) = event(float){}
+
+# Waiting for an event from another object
+
+loop:
+  Obj.CountdownEndedEvent.Await();
+  Print("Event happened, nw do something and then wait again")
+
+# Triggering the event in the main object
+
+CountdownEndedEvent.Signal();
+
+# Waiting for an event and adding one to a counter
+
+loop:
+  EliminationManager.EliminatedEvent().Await();
+  set Count += 1;
+
+######################################################################################################################
+
+# HUD
+
+# Display the name of the player in a message
+# Source: https://forums.unrealengine.com/t/how-to-get-the-display-name-of-a-player/840455
+
+RewardMessage<localizes>(RoundNum:int):message = "Round #{RoundNum} complete! Get your reward  {playername}!";
+
+######################################################################################################################
+
+## Global / singletons ##
+
+var GlobalAudioQueue:weak_map(session, audio_queue) = map{}
+
+AudioQueuePlay(Player: agent, AudioPlayer: audio_player_device, Duration: float): void=
+  if (AudioQueue := GlobalAudioQueue[GetSession()]):
+    AudioQueue.Play(Player, AudioPlayer, Duration)
+  else:
+    AudioQueue := audio_queue{};
+    if (set GlobalAudioQueue[GetSession()] = AudioQueue){}
+    AudioQueue.Play(Player, AudioPlayer, Duration)
+
+######################################################################################################################
+
+## Stat Usage ##
+## Basic Usage for the Stat related functions and map above ##
+
+## To associate stats with agent use this ##
+
+if(PlayerObj := player[Agent]):
+            if(AgentStats := playerMap[PlayerObj]):
+
+## Then use a `.` to call a method on the agent's stat map ##
+
+AgentStats.AddElim(1)
+
+## Compare ##
+
+Elims := AgentStats.GetElimCount()
+
+if:
+    Elims = Anything ## Can compare to anything here
+then:
+    Reward the agent, ect.
+
+######################################################################################################################
+

@@ -1,0 +1,56 @@
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Characters }
+using { /Verse.org/Simulation }
+using { /Fortnite.com/Game }
+
+killstreak_device := class(creative_device):
+
+    @editable
+    ItemGranters : []item_granter_device = array{}
+
+    var Killstreaks : [player]int = map{}
+
+    OnBegin<override>()<suspends>:void =
+        # Subscribe to player join/leave events
+        GetPlayspace().PlayerAddedEvent().Subscribe(OnPlayerAdded)
+        GetPlayspace().PlayerRemovedEvent().Subscribe(OnPlayerRemoved)
+
+        # Subscribe to existing players
+        for (Player : GetPlayspace().GetPlayers()):
+            SubscribeToPlayer(Player)
+
+    OnPlayerAdded(Player : player) : void =
+        SubscribeToPlayer(Player)
+
+    OnPlayerRemoved(Player : player) : void =
+        # Remove player from tracking
+        var NewMap : [player]int = map{}
+        for (Key -> Value : Killstreaks, Key <> Player):
+            if (set NewMap[Key] = Value) {}
+        set Killstreaks = NewMap
+
+    SubscribeToPlayer(Player : player) : void =
+        if (Character := Player.GetFortCharacter[]):
+            Character.EliminatedEvent().Subscribe(OnPlayerEliminated)
+            # Initialize killstreak
+            if (set Killstreaks[Player] = 0) {}
+
+    OnPlayerEliminated(Result : elimination_result) : void =
+        # Handle killer's streak
+        if (KillerChar := Result.EliminatingCharacter?, KillerAgent := KillerChar.GetAgent[], KillerPlayer := player[KillerAgent]):
+            var NewStreak : int = 1
+            if (CurrentStreak := Killstreaks[KillerPlayer]):
+                set NewStreak = CurrentStreak + 1
+            if (set Killstreaks[KillerPlayer] = NewStreak) {}
+
+            # Grant weapons at 3 and 6 kills
+            if (NewStreak = 3):
+                if (ItemGranter := ItemGranters[0]):
+                    ItemGranter.GrantItem(KillerPlayer)
+            else if (NewStreak = 6):
+                if (ItemGranter := ItemGranters[1]):
+                    ItemGranter.GrantItem(KillerPlayer)
+
+        # Reset victim's streak
+        if (VictimChar := Result.EliminatedCharacter, VictimAgent := VictimChar.GetAgent[], VictimPlayer := player[VictimAgent]):
+            if (set Killstreaks[VictimPlayer] = 0) {}

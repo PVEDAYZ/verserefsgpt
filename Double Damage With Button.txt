@@ -1,0 +1,30 @@
+using { /Fortnite.com/Devices }
+using { /Fortnite.com/Characters }
+using { /Verse.org/Simulation }
+using { /UnrealEngine.com/Temporary/Diagnostics }
+
+BasicFunctions := class(creative_device):
+
+    @editable
+    BasicDMGInc : damage_amplifier_powerup_device = damage_amplifier_powerup_device{}
+
+    @editable
+    ButtonDevice : button_device = button_device{}
+
+    @editable
+    BuffDuration : float = 10.0 # How many seconds the damage buff lasts
+
+    @editable
+    DamageMultiplier : float = 2.0 # How much to multiply the damage (e.g., 2x)
+
+    OnBegin<override>()<suspends>: void =
+        ButtonDevice.InteractedWithEvent.Subscribe(OnButtonPressed)
+
+    OnButtonPressed(PlayerAgent : agent) : void =
+        DoDamageBuff(PlayerAgent, BuffDuration, DamageMultiplier)
+
+    DoDamageBuff(NewAgent : agent, TimeLast : float, IncreaseBy : float) : void =
+        BasicDMGInc.SetMagnitude(IncreaseBy)
+        BasicDMGInc.SetDuration(TimeLast)
+        BasicDMGInc.Pickup(NewAgent)
+
